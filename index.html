@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html>
+<!-- This is a recreation, in HTML and JavaScript, of Davis Gries's FacultyApplet,
+    a Java applet which displays a list of Cornell Computer Science Department faculty members.
+    The motivation behind this rewrite is to support modern browsers; these days, browsers
+    won't run Java applets. 
+
+    The original FacultyApplet was surprisingly elaborate, given its relatively simple purpose.
+    Presumably it was written to gain familiarity with Java, or as a demonstration of Java.
+    This version attempts to recreate the functionality and appearance of the original 
+    as accurately as reasonably possible.
+
+    Mark Riordan  January 2024
+--> 
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="shortcut icon" href="favicon.ico" />
+    <title>FacultyApp</title>
+    <style>
+        .topfont {
+            font-family: sans-serif;
+        }
+
+        .topinstructions {
+            text-align: center;
+            width: 800px;
+        }
+    </style>
+    <!-- This is the equivalent of the embedded resource faclist.txt.
+  -->
+    <script type="text/javascript" src="faclist.js"></script>
+
+    <script>
+        // Return a promise that resolves to the text of the file.
+        // ** Currently not used.
+        function loadFacList() {
+            var result = null;
+
+            // URL of the text file
+            var url = "faclist.txt";
+            // Use fetch() to load the text file
+            fetch(url)
+                .then(response => {
+                    // Check if the response is successful
+                    if (!response.ok) {
+                        alert("bad status: " + response.status);
+                        throw new Error("Failed to load the text file.");
+                    }
+                    // Use text() to extract the text from the response
+                    return response.text();
+                })
+                .then(text => {
+                    alert("good response: " + text);
+                    return text;
+                })
+                .catch(error => {
+                    // Handle the error
+                    alert("I caught an error: " + error);
+                    console.error("An error occurred:", error);
+                });
+
+        }
+    </script>
+</head>
+
+<body>
+    <div class="topfont topinstructions">CS FACULTY OVER THE YEARS! &nbsp; Choose a range of years and a sort key and
+        press OK.</div>
+    <div class="topfont">&nbsp;</div>
+    <div class="topfont topinstructions">To sort on x with secondary keys y and z, first sort on z, then y, then x.
+    </div>
+    <div class="topfont">&nbsp;</div>
+    <div class="topfont topinstructions">First:&nbsp; <select name="selfirst" id="selfirst">
+            <option value="1965">1965</option>
+            <option value="1966">1966</option>
+        </select>
+        &nbsp;&nbsp;Last:&nbsp; <select name="sellast" id="sellast">
+            <option value="1965">1965</option>
+            <option value="1966">1966</option>
+        </select>
+        &nbsp;&nbsp;Sort by:&nbsp;
+        <select name="selsortby" id="selsortby">
+            <option value="name">name</option>
+            <option value="first semester">first semester</option>
+            <option value="last semester">last semester</option>
+            <option value="time in dept.">time in dept.</option>
+            <option value="title">title</option>
+        </select>
+        &nbsp;&nbsp;<button id="btnok">OK</button>
+        &nbsp;&nbsp;<button id="btnabout">About ...</button>
+    </div>
+    <!-- style="border:1px solid #d3d3d3;" -->
+    <canvas id="canvasHdr" width="800" height="70" style="border: 0px; margin: 0px; clear: both">
+    </canvas>
+    <div id="divMain"
+        style="max-height: 400px; max-width: 800px; overflow: scroll; position: relative; border: 0px; margin: 0px">
+        <canvas id="canvasMain" width="800" height="900" overflow: scroll style="clear:both; border: 0px; margin: 0px">
+            Your browser does not support the HTML canvas tag.</canvas>
+    </div>
+
+    <script>
+        // Given a context, compute the number of pixels between consecutive lines of text,
+        // including any necessary leading.
+        // Thanks to https://stackoverflow.com/questions/1134586
+        function computeFontHeight(ctx) {
+            let metrics = ctx.measureText("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ");
+            let fontHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
+            let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+            return 1.2 * actualHeight;
+        }
+
+        // Converted from Semester.java by codeconvert.ai
+        class Semester {
+            //constructor() {
+            //    this.yr = 0;
+            //    this.sem = 0;
+            //}
+
+            // Constructor --the semester that is in month m and 4-digit year y.
+            // Months 0..5 are the spring semester; months 6..11, fall semester
+            constructor(m, y) {
+                this.yr = y;
+                if (m <= 5) this.sem = 0;
+                else this.sem = 1;
+            }
+
+            semester() {
+                if (this.sem === 0) return "S";
+                return "F";
+            }
+
+            setSemester(t) {
+                if (t === "S")
+                    this.sem = 0;
+                else this.sem = 1;
+            }
+
+            year() {
+                return this.yr;
+            }
+
+            setYear(i) {
+                this.yr = i;
+            }
+
+            static lesseq(s1, s2) {
+                if (s1.year() < s2.year()) return true;
+                if (s1.year() > s2.year()) return false;
+                return s1.sem <= s2.sem;
+            }
+
+            static less(s1, s2) {
+                if (s1.year() < s2.year()) return true;
+                if (s1.year() > s2.year()) return false;
+                return s1.sem < s2.sem;
+            }
+
+            static equals(s1, s2) {
+                return s1.yr === s2.yr && s1.sem === s2.sem;
+            }
+
+            next() {
+                let s = new Semester();
+                s.yr = this.yr;
+                s.sem = 1 - this.sem;
+                if (s.sem === 0)
+                    s.yr = s.yr + 1;
+                return s;
+            }
+
+            static difference(s1, s2) {
+                if (this.less(s2, s1)) return 0;
+                if (s1.sem === s2.sem)
+                    return 2 * (s2.yr - s1.yr);
+                return 1 + 2 * (s2.yr - s1.next().yr);
+            }
+
+            static min(s1, s2) {
+                if (this.lesseq(s1, s2)) return s1;
+                return s2;
+            }
+
+            static max(s1, s2) {
+                if (this.lesseq(s1, s2)) return s2;
+                return s1;
+            }
+
+            toString() {
+                if (this.sem === 0) return "S" + this.yr;
+                return "F" + this.yr;
+            }
+        }
+
+        class LinkedListNode {
+            constructor(value = null) {
+                this.value = value;
+                this.next = null;
+            }
+        }
+
+        class LinkedList {
+            constructor(value = null) {
+                if (value === null) {
+                    this.head = null;
+                    this.tail = null;
+                } else {
+                    this.head = new LinkedListNode(value);
+                    this.tail = this.head;
+                }
+                this.size = value === null ? 0 : 1;
+            }
+
+            prepend(value) {
+                const newNode = new LinkedListNode(value);
+                newNode.next = this.head;
+                this.head = newNode;
+                if (this.tail === null) {
+                    this.tail = newNode;
+                }
+                this.size++;
+            }
+
+            change(value) {
+                if (this.head !== null) {
+                    this.head.value = value;
+                }
+            }
+
+            append(value) {
+                if (this.head === null) {
+                    this.head = new LinkedListNode(value);
+                    this.tail = this.head;
+                } else {
+                    this.tail.next = new LinkedListNode(value);
+                    this.tail = this.tail.next;
+                }
+                this.size++;
+            }
+
+            remove() {
+                if (this.head === null) {
+                    return null;
+                }
+                const value = this.head.value;
+                this.head = this.head.next;
+                this.size--;
+                if (this.head === null) {
+                    this.tail = null;
+                }
+                return value;
+            }
+
+            inspect() {
+                return this.head === null ? null : this.head.value;
+            }
+
+            inspectAt(index) {
+                let current = this.head;
+                let i = 0;
+                while (i < index && current !== null) {
+                    current = current.next;
+                    i++;
+                }
+                return current === null ? null : current.value;
+            }
+
+            inspectLast() {
+                return this.tail === null ? null : this.tail.value;
+            }
+
+            isEmpty() {
+                return this.head === null;
+            }
+
+            size() {
+                return this.size;
+            }
+
+            clear() {
+                this.head = null;
+                this.tail = null;
+                this.size = 0;
+            }
+
+            truncate(n) {
+                if (n === 0) {
+                    this.clear();
+                    return this;
+                }
+                this.size = n;
+                let current = this.head;
+                while (n !== 1) {
+                    n--;
+                    current = current.next;
+                }
+                this.tail = current;
+                this.tail.next = null;
+                return this;
+            }
+
+            removeLast() {
+                if (this.size === 0) {
+                    return null;
+                }
+                if (this.size === 1) {
+                    const value = this.head.value;
+                    this.head = null;
+                    this.tail = null;
+                    this.size--;
+                    return value;
+                }
+                let current = this.head;
+                while (current.next !== this.tail) {
+                    current = current.next;
+                }
+                const value = this.tail.value;
+                this.tail = current;
+                this.tail.next = null;
+                this.size--;
+                return value;
+            }
+
+            toString() {
+                let current = this.head;
+                let str = "(";
+                let isFirst = true;
+                while (current !== null) {
+                    if (!isFirst) {
+                        str += ", ";
+                    }
+                    isFirst = false;
+                    str += current.value;
+                    current = current.next;
+                }
+                return str + ")";
+            }
+        }
+
+        class LinkedListIterator {
+            constructor(linkedList) {
+                this.head = linkedList.head;
+                this.node = this.head;
+                this.index = 0;
+            }
+
+            reset() {
+                this.node = this.head;
+                this.index = 0;
+            }
+
+            okay() {
+                return this.node !== null;
+            }
+
+            data() {
+                return this.node.value;
+            }
+
+            next() {
+                if (this.node !== null) {
+                    this.node = this.node.next;
+                    this.index++;
+                }
+            }
+
+            getIndex() {
+                return this.node !== null ? this.index : 0;
+            }
+        }
+
+
+
+        // Converted from DynArray.java by codeconvert.ai
+        class DynArray {
+                constructor() {
+                    this.b = new Array(10);
+                    this.sz = 0;
+                }
+
+                add(f) {
+                    if (this.sz === this.b.length) {
+                        let bTemp = this.b;
+                        this.b = new Array(this.b.length * 4);
+                        if (this.sz > 0) {
+                            bTemp.slice(0, this.sz).forEach((item, index) => {
+                                this.b[index] = item;
+                            });
+                        }
+                    }
+                    this.b[this.sz] = f;
+                    this.sz += 1;
+                }
+
+                element(i) {
+                    return this.b[i];
+                }
+
+                size() {
+                    return this.sz;
+                }
+
+                toString() {
+                    let s = '';
+                    for (let i = 0; i < this.sz; i++) {
+                        s += "\n" + this.b[i].toString();
+                    }
+                    return s;
+                }
+
+                swap(i, k) {
+                    let temp = this.b[i];
+                    this.b[i] = this.b[k];
+                    this.b[k] = temp;
+                }
+
+                remove(i) {
+                    this.b[i] = this.b[this.sz - 1];
+                    this.sz -= 1;
+                }
+
+                static cameBefore(x, y) {
+                    return Semester.less(x.firstSemester(), y.firstSemester());
+                }
+
+                static leftBefore(x, y) {
+                    return Semester.less(x.lastSemester(), y.lastSemester());
+                }
+
+                sort(sortChoice) {
+                    this.sort2 = this.sort1;
+                    this.sort1 = this.sort0;
+                    this.sort0 = sortChoice;
+                    this.quickSort();
+                }
+
+                copy() {
+                    let c = new DynArray();
+                    for (let i = 0; i < this.sz; i++) {
+                        c.add(this.b[i]);
+                    }
+                    return c;
+                }
+
+                numTitle(tt) {
+                    let n = 0;
+                    for (let i = 0; i < this.sz; i++) {
+                        if (this.element(i).lastTitle === tt) {
+                            n += 1;
+                        }
+                    }
+                    return n;
+                }
+
+                partition(h, k) {
+                    let q = h + 1;
+                    let p = k - 1;
+
+                    while (q <= p) {
+                        if (this.lessTest(q, h)) {
+                            q += 1;
+                        } else if (this.lessTest(h, p)) {
+                            p -= 1;
+                        } else {
+                            this.swap(p, q);
+                            q += 1;
+                            p -= 1;
+                        }
+                    }
+                    if (p + 2 === q) {
+                        p += 1;
+                    }
+
+                    this.swap(h, p);
+                    return p;
+                }
+
+                quickSort() {
+                    let t = new LinkedList();
+                    t.add(new Coordinates(0, this.size()));
+
+                    while (t.size() !== 0) {
+                        let co = t.remove();
+                        let h = co.x;
+                        let k = co.y;
+                        if (k === h) {
+                            // Do nothing
+                        } else if (k - h <= 2) {
+                            if (this.lessTest(k - 1, h)) {
+                                this.swap(k - 1, h);
+                            }
+                        } else {
+                            let j = this.partition(h, k);
+                            if (k - j - 1 > j - h) {
+                                t.prepend(new Coordinates(j + 1, k));
+                                t.prepend(new Coordinates(h, j));
+                            } else {
+                                t.prepend(new Coordinates(h, j));
+                                t.prepend(new Coordinates(j + 1, k));
+                            }
+                        }
+                    }
+                }
+
+                less(i, j, s) {
+                    switch (s) {
+                        case CSCanvas.BYNAME:
+                            return this.b[i].name.localeCompare(this.b[j].name) < 0;
+                        case CSCanvas.BYTITLE:
+                            return this.b[j].lastTitle < this.b[i].lastTitle;
+                        case CSCanvas.BYFIRSTSEMESTER:
+                            return DynArray.cameBefore(this.b[i], this.b[j]);
+                        case CSCanvas.BYLASTSEMESTER:
+                            return DynArray.leftBefore(this.b[j], this.b[i]);
+                        case CSCanvas.BYLENGTH:
+                            return this.b[j].numSemesters() < this.b[i].numSemesters();
+                        default:
+                            return true;
+                    }
+                }
+
+                lessTest(i, j) {
+                    if (this.less(i, j, this.sort0)) return true;
+                    if (this.less(j, i, this.sort0)) return false;
+
+                    if (this.less(i, j, this.sort1)) return true;
+                    if (this.less(j, i, this.sort1)) return false;
+
+                    return this.less(i, j, this.sort2);
+                }
+            }
+
+        
+
+        class Tokenizer {
+            constructor(str, delimiters) {
+                this.str = str;
+                this.index = 0;
+                this.delimiters = delimiters;
+            }
+
+            hasMoreTokens() {
+                // Skip delimiters.
+                while(this.index < this.str.length && this.delimiters.indexOf(this.str[this.index]) !== -1) {
+                    this.index++;
+                }
+                return this.index < this.str.length;
+            }
+
+            nextToken() {
+                //console.log("nextToken here; str="+this.str.substring(0,40)+".. index="+this.index);
+                if (this.index >= this.str.length) {
+                    return null;
+                }
+
+                // Skip to beg of next token.
+                while (this.index < this.str.length && this.delimiters.indexOf(this.str[this.index]) !== -1) {
+                    this.index++;
+                }
+
+                let startIndex = this.index;
+                while (this.index < this.str.length && this.delimiters.indexOf(this.str[this.index]) === -1) {
+                    this.index++;
+                }
+
+                let token = this.str.substring(startIndex, this.index);
+                console.log("nextToken: startIndex=" + startIndex +" index="+this.index+" token="+token);
+                if (token.length === 0) {
+                    return null;
+                }
+
+                return token;
+            }
+        }
+
+        class GriesTokenizer extends Tokenizer {
+            constructor(s) {
+                super(s, "\n\t\r ");
+            }
+
+            nextIntToken() {
+                const s = this.nextToken();
+                if (!this.isDigit(s)) return -1;
+                return parseInt(s);
+            }
+
+            isDigit(s) {
+                for (let i = 0; i < s.length; i++) {
+                    if (s.charCodeAt(i) < 48) return false;
+                    if (s.charCodeAt(i) > 57) return false;
+                }
+                return true;
+            }
+
+            nextWord() {
+                const s = this.nextToken();
+                if (s.charAt(0) !== '"') return s;
+                // Word begins with ", so parse a real string
+                s = s.substring(1);
+                while (s.charAt(s.length - 1) !== '"') {
+                    s = s + " " + this.nextToken();
+                }
+                return s.substring(0, s.length - 1);
+            }
+        }
+
+
+
+    class TitleTime {
+        static FIELD = 1;
+        static LECTURER = 2;
+        static SRLECTURER = 3;
+        static INSTRUCTOR = 4;
+        static ASSTPROF = 5;
+        static ASSOCPROF = 6;
+        static FULLPROF = 7;
+        static EMERITUS = 8;
+        static numTitles = 8;
+        static NOLEAVE = 1;
+        static SABBATIC = 2;
+        static OTHERLEAVE = 3;
+
+        constructor(t, s1, s2, st = TitleTime.NOLEAVE) {
+            this.firstSemester = s1;
+            this.lastSemester = s2;
+            this.title = t;
+            this.status = st;
+        }
+
+        static makeTitle(title) {
+            switch (title) {
+                case TitleTime.LECTURER: return "Lecturer";
+                case TitleTime.SRLECTURER: return "Sr. Lecturer";
+                case TitleTime.INSTRUCTOR: return "Instructor";
+                case TitleTime.ASSTPROF: return "Assis. Prof.";
+                case TitleTime.ASSOCPROF: return "Assoc. Prof.";
+                case TitleTime.FULLPROF: return "Full Prof.";
+                case TitleTime.EMERITUS: return "Prof. Emeritus";
+                case TitleTime.FIELD: return "Field Member";
+                default: return "Error. unknown";
+            }
+        }
+
+        setStatus(st) {
+            this.status = st;
+        }
+
+        makeTitle() {
+            return TitleTime.makeTitle(this.title);
+        }
+
+        makeStatus() {
+            switch (this.status) {
+                case TitleTime.NOLEAVE: return "noleave";
+                case TitleTime.SABBATIC: return "sabbatic";
+                case TitleTime.OTHERLEAVE: return "leave";
+                default: return "Error: status " + this.status + " unknown";
+            }
+        }
+
+        toString() {
+            return `${this.makeTitle()} ${this.makeStatus()} ${this.firstSemester}--${this.lastSemester}`;
+        }
+
+        titleColor() {
+            switch (this.title) {
+                case TitleTime.LECTURER: return "rgb(52,236,2)";
+                case TitleTime.SRLECTURER: return "rgb(2,140,12)";
+                case TitleTime.INSTRUCTOR: return "rgb(56,50,247)";
+                case TitleTime.ASSTPROF: return "rgb(250,173,110)";
+                case TitleTime.ASSOCPROF: return "rgb(250,44,28)";
+                case TitleTime.FULLPROF: return "rgb(149,14,4)";
+                case TitleTime.EMERITUS: return "rgb(89,89,89)";
+                case TitleTime.FIELD: return "rgb(104,217,249)";
+                default: return "rgb(0,0,0)";
+            }
+        }
+
+        static titleColor(t) {
+            let temp = new TitleTime(t, null, null);
+            return temp.titleColor();
+        }
+    }
+
+    class Faculty {
+        constructor(name, t, st, s1, s2, t1 = null, s1Value = null, t2 = null, s2Value = null) {
+            this.name = name;
+            this.periods = new LinkedList();
+            var firstSemester, lastSemester;
+
+            if (t1 !== null && s1Value !== null && t2 !== null && s2Value !== null) {
+                firstSemester = t1 === "S" ? new Semester(0, s1Value) : new Semester(6, s1Value);
+                lastSemester = t2 === "S" ? new Semester(0, s2Value) : new Semester(6, s2Value);
+            } else {
+                firstSemester = s1;
+                lastSemester = s2;
+            }
+
+            if (st !== null) {
+                this.periods.append(new TitleTime(t, firstSemester, lastSemester, st));
+            } else {
+                this.periods.append(new TitleTime(t, firstSemester, lastSemester));
+            }
+
+            this.lastTitle = t;
+        }
+
+        addPeriod(t, st, s1, s2) {
+            this.periods.append(new TitleTime(t, s1, s2, st));
+            this.lastTitle = t;
+        }
+
+        toString() {
+            var res= this.name;
+	        let iter= new LinkedListIterator(this.periods);
+	        while (iter.okay()) {
+		        let tt= iter.data();
+        		res= res + " " + tt.toString();
+		        iter.next();
+		    }
+
+            return res;
+        }
+
+        firstSemester() {
+            return this.periods.head.data.firstSemester;
+        }
+
+        lastSemester() {
+            return this.periods.tail.data.lastSemester;
+        }
+
+        numSemesters() {
+            let num = 0;
+            let iter = this.periods[Symbol.iterator]();
+            let result;
+
+            while (!(result = iter.next()).done) {
+                let tt = result.value;
+                if (tt.status !== TitleTime.OTHERLEAVE) {
+                    num = num + Semester.difference(tt.firstSemester, tt.lastSemester) + 1;
+                }
+            }
+
+            return num;
+        }
+
+        lastTitle() {
+            let ans = 0;
+            let iter = this.periods[Symbol.iterator]();
+            let result;
+
+            while (!(result = iter.next()).done) {
+                let tt = result.value;
+                if (CSCanvas.isWithin(tt)) {
+                    ans = tt.title;
+                }
+            }
+
+            return ans;
+        }
+    }
+
+
+
+
+
+
+        class CSCanvas /*extends Canvas*/ {
+            // static drawing;
+            // static length;
+            // static width;
+            // static maxTitleWidth;
+            // static m_g;
+            // static font;
+            // static fontM;
+            // static fontHeight;
+            // static charWidth;
+            // static widthOne;
+            // static firstPossibleSem;
+            // static lastPossibleSem;
+            // static firstSem;
+            // static lastSem;
+            // static firstSemScrolled;
+            // backBuffer;
+            // backG;
+            // static BYNAME = 0;
+            // static BYFIRSTSEMESTER = 1;
+            // static BYLASTSEMESTER = 2;
+            // static BYLENGTH = 3;
+            // static BYTITLE = 4;
+            // static sortMethod = CSCanvas.BYNAME;
+            // static beginx;
+            // static beginy;
+            // static startVerticals;
+            // static liney;
+            // static beginFaculty;
+            // //   static colorNames = new Color(16, 4, 177);
+            // static bigFaculty;
+            // static faculty;
+            // error = false;
+            // static message1 = "";
+            // static message2 = "";
+
+            constructor() {
+                this.error = false;
+                this.message1 = "";
+                this.lastPossibleSem = new Semester(0, 1999);
+            }
+
+            //   constructor(d) {
+            //     //super();
+            //     drawing = d;
+            //     setBackground(new Color(250, 250, 210));
+            //     let todaysDate = new Date();
+            
+            //     lastSem = new Semester(todaysDate.getMonth(),
+            //       todaysDate.getFullYear());
+            //     bigFaculty = parse();
+            //     if (bigFaculty != null) {
+            //       faculty = bigFaculty.copy();
+            //       faculty.sort(BYFIRSTSEMESTER);
+            //       firstPossibleSem = faculty.element(0).firstSemester();
+            //       firstSem = firstPossibleSem;
+            //       faculty.sort(BYNAME);
+            //     }
+            //     font = new Font("Monospaced", Font.PLAIN, 10);
+            //     fontM = getFontMetrics(font);
+            //     charWidth = fontM.charWidth('1');
+            //     widthOne = 2 + charWidth;
+            //     fontHeight = fontM.getHeight();
+            //     beginy = 6 * fontHeight + 5;
+            //     beginx = 150;
+            //     liney = fontHeight;
+            //     startVerticals = 6 * fontHeight;
+            //     length = fontHeight * (5 + faculty.size()) + 5;
+            //     let diff = Semester.difference(firstSem, lastSem);
+            //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
+            //     maxTitleWidth = 20 * fontM.charWidth('1');
+            //   }
+
+            //   paint(g) {
+            //     update(g);
+            //   }
+
+            //   paintCanvas(g) {
+            //     m_g = g;
+            //     if (error) {
+            //       m_g.drawString("Sorry, there is an error in the input.", 2, liney);
+            //       m_g.drawString(message1, 2, liney + fontHeight);
+            //       m_g.drawString(message2, 2, liney + 2 * fontHeight);
+            //     }
+            //     firstSemScrolled = firstSem;
+            //     let temp = drawing.scrollH.getValue();
+            //     for (let i = 0; i < temp; i = i + 1) firstSemScrolled = firstSemScrolled.next();
+            //     liney = fontHeight;
+            //     paintLegend();
+            //     printHeaders(3 * liney);
+            //     beginy = 6 * fontHeight + 5;
+            //     liney = beginy;
+            //     drawFaculty(faculty);
+            //     drawVerticals();
+            //   }
+
+            //   update(g) {
+            //     let w = getBounds().width;
+            //     let h = getBounds().height;
+            //     if (backBuffer == null ||
+            //       backBuffer.getWidth(null) != w ||
+            //       backBuffer.getHeight(null) != h) {
+            //       backBuffer = createImage(w, h);
+            //       if (backBuffer != null) {
+            //         if (backG != null) {
+            //           backG.dispose();
+            //         }
+            //         backG = backBuffer.getGraphics();
+            //       }
+            //     }
+            //     if (backBuffer != null) {
+            //       backG.setColor(new Color(250, 250, 210));
+            //       backG.fillRect(0, 0, w, h);
+            //       paintCanvas(backG);
+            //       g.drawImage(backBuffer, 0, 0, null);
+            //     }
+            //   }
+
+            //   static printHeaders(liney) {
+            //     let saveColor = m_g.getColor();
+            //     m_g.setColor(Color.black);
+            //     let s = firstSemScrolled;
+            //     let xF = beginx;
+            //     while (Semester.lesseq(s, lastSem)) {
+            //       m_g.drawString(s.semester(), xF + 1, liney);
+            //       let j = s.year() % 100;
+            //       m_g.drawString(((j - j % 10) / 10).toString(), xF, liney + fontHeight);
+            //       m_g.drawString((j % 10).toString(), xF, liney + 2 * fontHeight);
+            //       xF = xF + widthOne;
+            //       s = s.next();
+            //     }
+            //     liney = liney + 3 * fontHeight;
+            //     m_g.setColor(saveColor);
+            //   }
+
+            //   static drawFaculty(faculty) {
+            //     let saveColor = m_g.getColor();
+            //     let i = drawing.scrollV.getValue();
+            //     let maxi = i + (drawing.c.getBounds().height - 5) / fontHeight + 1;
+            //     if (maxi > faculty.size()) maxi = faculty.size();
+            //     while (i != maxi) {
+            //       paintFaculty(faculty.element(i));
+            //       i = i + 1;
+            //       liney = liney + fontHeight;
+            //     }
+            //     m_g.setColor(saveColor);
+            //   }
+
+            //   static paintFaculty(f) {
+            //     m_g.setColor(colorNames);
+            //     let st = f.name;
+            //     let suffix = "";
+            //     if (sortMethod == BYLENGTH) suffix = " " + f.numSemesters() / 2.0;
+            //     let noChars = ((beginx) / charWidth) - suffix.length() - 4;
+            //     if (st.length() > noChars)
+            //       st = st.substring(0, noChars - 1);
+            //     m_g.drawString(st + suffix, 2, liney);
+            //     let iter = new LinkedListIterator(f.periods);
+            //     let previous = null;
+            //     while (iter.okay()) {
+            //       let tt = iter.data();
+            //       iter.next();
+            //       let next = null;
+            //       if (iter.okay())
+            //         next = iter.data();
+            //       paintPeriod(previous, tt, next);
+            //       previous = tt;
+            //     }
+            //     firstThreeDots(f);
+            //     lastThreeDots(f);
+            //     let diff = Semester.difference(firstSemScrolled, lastSem);
+            //     let k = beginx + (diff + 1) * widthOne + 2 * widthOne;
+            //     m_g.drawString(f.name, k, liney);
+            //   }
+
+            //   static paintLegend() {
+            //     let liney = fontHeight;
+            //     let fm = m_g.getFontMetrics();
+            //     let cm = 2;
+            //     m_g.drawString("No. of faculty: " + faculty.size(), cm, fontHeight * 3);
+            //     let noOnLine = 0;
+            //     let tt = 1;
+            //     while (tt <= TitleTime.numTitles) {
+            //       if (someoneHas(tt)) {
+            //         let n = faculty.numTitle(tt);
+            //         let title = TitleTime.makeTitle(tt);
+            //         let num = faculty.numTitle(tt);
+            //         m_g.setColor(TitleTime.titleColor(tt));
+            //         m_g.drawString(title + " (" + num + ")  ", cm, liney);
+            //         cm = cm + maxTitleWidth;
+            //         noOnLine = noOnLine + 1;
+            //         if (noOnLine == 4) {
+            //           liney = liney + fontHeight;
+            //           noOnLine = 0;
+            //           cm = 2;
+            //         }
+            //       }
+            //       tt = tt + 1;
+            //     }
+            //     if (someoneHasStatus(TitleTime.SABBATIC)) {
+            //       liney = 4 * fontHeight;
+            //       cm = 2;
+            //       m_g.drawString("sabbatic: ", cm, liney);
+            //       cm = cm + fm.stringWidth("sabbatic: ");
+            //       m_g.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
+            //       drawStatusLines(m_g, cm, cm + 10, TitleTime.NOLEAVE, liney);
+            //       drawStatusLines(m_g, cm + 11, cm + 28, TitleTime.SABBATIC, liney);
+            //       drawStatusLines(m_g, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
+            //     }
+            //     if (someoneHasStatus(TitleTime.OTHERLEAVE)) {
+            //       liney = 5 * fontHeight;
+            //       cm = 2;
+            //       m_g.drawString("leave: ", cm, liney);
+            //       cm = cm + fm.stringWidth("sabbatic: ");
+            //       m_g.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
+            //       drawStatusLines(m_g, cm, cm + 10, TitleTime.NOLEAVE, liney);
+            //       drawStatusLines(m_g, cm + 11, cm + 28, TitleTime.OTHERLEAVE, liney);
+            //       drawStatusLines(m_g, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
+            //     }
+            //   }
+
+            //   static drawStatusLines(m_g, h1, h2, st, liney) {
+            //     if (st == TitleTime.SABBATIC) {
+            //     } else {
+            //       m_g.drawLine(h1, liney - 5, h2, liney - 5);
+            //       m_g.drawLine(h1, liney - 4, h2, liney - 4);
+            //     }
+            //     if (st == TitleTime.OTHERLEAVE) {
+            //     } else {
+            //       m_g.drawLine(h1, liney - 3, h2, liney - 3);
+            //       m_g.drawLine(h1, liney - 2, h2, liney - 2);
+            //     }
+            //   }
+
+            //   static firstThreeDots(f) {
+            //     let first = f.periods.inspect();
+            //     m_g.setColor(first.titleColor());
+            //     if (isWithin(first) &&
+            //       Semester.lesseq(firstSem, f.firstSemester()))
+            //       return;
+            //     m_g.drawString(" ...", beginx - 16, liney - 4);
+            //   }
+
+            //   static lastThreeDots(f) {
+            //     let last = f.periods.inspectLast();
+            //     m_g.setColor(last.titleColor());
+            //     if (isWithin(last) &&
+            //       Semester.lesseq(f.lastSemester(), lastSem))
+            //       return;
+            //     let diff = Semester.difference(firstSemScrolled, lastSem);
+            //     let k = beginx + (diff + 1) * widthOne - 1;
+            //     m_g.setColor(last.titleColor());
+            //     m_g.drawString(" ...", k + 2, liney - 4);
+            //   }
+
+            //   static paintPeriod(previous, tt, next) {
+            //     if (!isWithin(tt))
+            //       return;
+            //     let sTemp = Semester.max(firstSemScrolled, tt.firstSemester);
+            //     sTemp = Semester.min(lastSem, sTemp);
+            //     let j = beginx + Semester.difference(firstSemScrolled, sTemp) * widthOne;
+            //     j = j + widthOne / 2 - 2;
+            //     if ((previous != null) &&
+            //       isWithin(previous) &&
+            //       Semester.equals(previous.lastSemester.next(),
+            //         tt.firstSemester)) {
+            //       j = j - widthOne / 2 + 1;
+            //     }
+            //     sTemp = Semester.min(lastSem, tt.lastSemester);
+            //     sTemp = Semester.max(firstSemScrolled, sTemp);
+            //     let k = beginx + Semester.difference(firstSemScrolled, sTemp) * widthOne;
+            //     k = k + widthOne / 3;
+            //     if ((next != null) &&
+            //       isWithin(next) &&
+            //       Semester.equals(next.firstSemester,
+            //         tt.lastSemester.next())) {
+            //       k = k + widthOne / 2;
+            //     }
+            //     m_g.setColor(tt.titleColor());
+            //     drawStatusLines(m_g, j, k, tt.status, liney);
+            //   }
+
+            //   static isWithin(tt) {
+            //     if (Semester.less(tt.lastSemester, firstSem))
+            //       return false;
+            //     if (Semester.less(lastSem, tt.firstSemester))
+            //       return false;
+            //     return true;
+            //   }
+
+            //   static someoneHas(tt) {
+            //     for (let i = 0; i != faculty.size(); i = i + 1) {
+            //       let f = faculty.element(i);
+            //       let iter = new LinkedListIterator(f.periods);
+            //       while (iter.okay()) {
+            //         if (isWithin(iter.data()) &&
+            //           iter.data().title == tt) {
+            //           return true;
+            //         }
+            //         iter.next();
+            //       }
+            //     }
+            //     return false;
+            //   }
+
+            //   static someoneHasStatus(st) {
+            //     for (let i = 0; i != faculty.size(); i = i + 1) {
+            //       let f = faculty.element(i);
+            //       let iter = new LinkedListIterator(f.periods);
+            //       while (iter.okay()) {
+            //         if (isWithin(iter.data()) &&
+            //           iter.data().status == st) {
+            //           return true;
+            //         }
+            //         iter.next();
+            //       }
+            //     }
+            //     return false;
+            //   }
+
+            readTitle(t, name) {
+                let ret = 0;
+                let token = t.nextWord();
+                if (token==".") return 0;
+                if (token=="SAB") {
+                    ret = 15;
+                    token = t.nextWord();
+                } else if (token=="LEA") {
+                    ret = 30;
+                    token = t.nextWord();
+                }
+                if (token=="L") return ret + TitleTime.LECTURER;
+                if (token=="SL") return ret + TitleTime.SRLECTURER;
+                if (token=="I") return ret + TitleTime.INSTRUCTOR;
+                if (token=="A1") return ret + TitleTime.ASSTPROF;
+                if (token=="A2") return ret + TitleTime.ASSOCPROF;
+                if (token=="FP") return ret + TitleTime.FULLPROF;
+                if (token=="EP") return ret + TitleTime.EMERITUS;
+                if (token=="F") return ret + TitleTime.FIELD;
+                this.error = true;
+                this.message1 = " A title for " + name +
+                    " is wrong; it is \"" + token + "\"";
+                return -1;
+            }
+
+            lastTitle(f) {
+                let iter = new LinkedListIterator(f.periods);
+                while (!isWithin(iter.data())) {
+                    iter.next();
+                }
+                let p = iter.data();
+                iter.next();
+                while (iter.okay() && isWithin(iter.data())) {
+                    p = iter.data();
+                    iter.next();
+                }
+                return p.title;
+            }
+
+            readPeriod(t, name, s1, s2) {
+                let bSemester = t.nextWord();
+                if (!this.isForS(bSemester)) {
+                    this.error = true;
+                    this.message1 = "A token following " + name +
+                        " is not \"F\" or \"S\";";
+                        this.message2 = "it is \"" + bSemester + "\"";
+                    s1.setYear(-1);
+                    return;
+                }
+                s1.setSemester(bSemester);
+                let bYear = t.nextIntToken();
+                if (bYear == -1) {
+                    this.error = true;
+                    this.message1 = "The first year for name " + name + " is not an integer.";
+                    s1.setYear(-1);
+                    return;
+                }
+                s1.setYear(bYear);
+                let eSemester = t.nextWord();
+                let eYear;
+                if (eSemester == "present") {
+                    s2.setSemester(this.lastPossibleSem.semester());
+                    s2.setYear(this.lastPossibleSem.year());
+                } else {
+                    if (!this.isForS(eSemester)) {
+                        this.error = true;
+                        this.message1 = "The last semester for " + name + "is not \"F\" or \"S\";";
+                        this.message2 = "it is \"" + eSemester + "\"";
+                        s1.setYear(-1);
+                        return;
+                    }
+                    eYear = t.nextIntToken();
+                    if (eYear == -1) {
+                        this.error = true;
+                        this.message1 = "The last year for name " + name + " is not an integer.";
+                        s1.setYear(-1);
+                        return;
+                    }
+                    s2.setSemester(eSemester);
+                    s2.setYear(eYear);
+                }
+            }
+
+            isDigits(s) {
+                for (let i = 0; i != s.length(); i = i + 1) {
+                    if (s.charAt(i) < '0') return false;
+                    if (s.charAt(i) > '9') return false;
+                }
+                return true;
+            }
+
+            isForS(s) {
+                return (s=="F" || s=="S");
+            }
+
+
+            parse() /* returns a DynArray */ {
+                console.log("parse here");
+                let d = new DynArray();
+                let t = new GriesTokenizer(strFacList);
+                while (t.hasMoreTokens()) {
+                    let name = t.nextWord().replace('=', ' ');
+                    console.log("parse: name=" + name);
+
+                    let title = this.readTitle(t, name);
+                    if (title == -1) return null;
+                    let status = TitleTime.NOLEAVE;
+                    if (title > 30) {
+                        status = TitleTime.OTHERLEAVE;
+                        title = title - 30;
+                    }
+                    if (title > 15) {
+                        status = TitleTime.SABBATIC;
+                        title = title - 15;
+                    }
+                    let s1 = new Semester();
+                    let s2 = new Semester();
+                    this.readPeriod(t, name, s1, s2);
+                    if (s1.year() == -1) return null;
+                    let f = new Faculty(name, title, status, s1, s2);
+                    title = this.readTitle(t, name);
+                    while (title != 0) {
+                        if (title == -1) return null;
+                        status = TitleTime.NOLEAVE;
+                        if (title > 30) {
+                            status = TitleTime.OTHERLEAVE;
+                            title = title - 30;
+                        }
+                        if (title > 15) {
+                            status = TitleTime.SABBATIC;
+                            title = title - 15;
+                        }
+                        s1 = new Semester();
+                        s2 = new Semester();
+                        this.readPeriod(t, name, s1, s2);
+                        if (s1.year() == -1) return null;
+                        f.addPeriod(title, status, s1, s2);
+                        title = this.readTitle(t, name);
+                    }
+                    d.add(f);
+                }
+                console.log("d=" + d);
+                //alert("d=" + d);
+                return d;
+            }
+
+
+            // static replace(s, c1, c2) {
+            //     let t = new StringBuffer(s);
+            //     let i = 0;
+            //     while (i != t.length()) {
+            //         if (t.charAt(i) == c1)
+            //             t.setCharAt(i, c2);
+            //         i = i + 1;
+            //     }
+            //     return t.toString();
+            // }
+
+            //   static drawVerticals() {
+            //     let saveColor = m_g.getColor();
+            //     m_g.setColor(saveColor.brighter());
+            //     let topy = startVerticals;
+            //     let i = 0;
+            //     let diff = Semester.difference(firstSemScrolled, lastSem);
+            //     while (i <= diff) {
+            //       let k = beginx + i * widthOne - 1;
+            //       m_g.drawLine(k, topy, k, liney - fontHeight);
+            //       i = i + 10;
+            //     }
+            //     let k = beginx + (diff + 1) * widthOne - 1;
+            //     m_g.drawLine(k, topy, k, liney - fontHeight);
+            //     m_g.setColor(saveColor);
+            //   }
+
+            //   recalculate(sortChoice, fy, ly) {
+            //     firstSem = Semester.min(new Semester(9, fy), lastPossibleSem);
+            //     lastSem = Semester.min(new Semester(0, ly + 1), lastPossibleSem);
+            //     faculty = bigFaculty.copy();
+            //     let j = 0;
+            //     while (j != faculty.size()) {
+            //       let fac = faculty.element(j);
+            //       let out = Semester.less(fac.lastSemester(), firstSem) ||
+            //         Semester.less(lastSem, fac.firstSemester());
+            //       if (out) {
+            //         faculty.remove(j);
+            //       } else {
+            //         fac.lastTitle = lastTitle(fac);
+            //         j = j + 1;
+            //       }
+            //     }
+            //     faculty.sort(sortChoice);
+            //     sortMethod = sortChoice;
+            //   }
+        }
+
+
+
+
+        function main() {
+
+            var cHdr = document.getElementById("canvasHdr");
+            var ctxHdr = cHdr.getContext("2d");
+
+            ctxHdr.fillStyle = "Yellow"; //"LightYellow";
+            ctxHdr.fillRect(0, 0, cHdr.width, cHdr.height);
+
+            var cMain = document.getElementById("canvasMain");
+            var ctxMain = cMain.getContext("2d");
+            ctxMain.fillStyle = "Yellow";//"LightYellow";
+            ctxMain.fillRect(0, 0, cMain.width, cMain.height);
+
+            ctxMain.fillStyle = "Black";
+            ctxMain.font = "10pt monospace";
+            let lineHeight = computeFontHeight(ctxMain);
+
+            if (false) {
+
+                // ctxHdr.fillStyle = "Black";
+                // ctxHdr.font = "10pt sans-serif";
+                // let hdr1 = "zzCS FACULTY OVER THE YEARS!   Choose a range of years and a sort key and press OK.";
+                // let textWidth = ctxHdr.measureText(hdr1).width;
+                // //alert("textWidth=" + textWidth + " cHdr.width=" + cHdr.width)
+                // ctxHdr.fillText(hdr1, (cHdr.width - textWidth) / 2, 14);
+
+
+                for (var j = 1; j < 44; j++) {
+                    var txt = "CS FACULTY " + j + " OVER THE YEARS!   Choose a range of years and a sort key and press OK.";
+                    ctxMain.fillText(txt, 15, lineHeight * j);
+                }
+            }
+
+            var canvas = new CSCanvas();
+            canvas.parse();
+
+        }
+        main();
+    </script>
+</body>
+
+</html>
