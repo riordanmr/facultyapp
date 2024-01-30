@@ -2,6 +2,7 @@
 <html>
 <!-- This is a recreation, in HTML and JavaScript, of Davis Gries's FacultyApplet,
     a Java applet which displays a list of Cornell Computer Science Department faculty members.
+    See the original at https://www.cs.cornell.edu/gries/facultyunix/first.html.
     The motivation behind this rewrite is to support modern browsers; these days, browsers
     won't run Java applets. 
 
@@ -108,6 +109,12 @@
             let fontHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
             let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
             return 1.2 * actualHeight;
+        }
+
+        // Convert red, green, blue integers to an HTML color code.
+        function rgb(r, g, b) {
+            const toHex = n => n.toString(16).padStart(2, '0');
+            return '#' + toHex(r) + toHex(g) + toHex(b);
         }
 
         // Converted from Semester.java by codeconvert.ai
@@ -373,162 +380,162 @@
 
         // Converted from DynArray.java by codeconvert.ai
         class DynArray {
-                constructor() {
-                    this.b = new Array(10);
-                    this.sz = 0;
+            constructor() {
+                this.b = new Array(10);
+                this.sz = 0;
+            }
+
+            add(f) {
+                if (this.sz === this.b.length) {
+                    let bTemp = this.b;
+                    this.b = new Array(this.b.length * 4);
+                    if (this.sz > 0) {
+                        bTemp.slice(0, this.sz).forEach((item, index) => {
+                            this.b[index] = item;
+                        });
+                    }
+                }
+                this.b[this.sz] = f;
+                this.sz += 1;
+            }
+
+            element(i) {
+                return this.b[i];
+            }
+
+            size() {
+                return this.sz;
+            }
+
+            toString() {
+                let s = '';
+                for (let i = 0; i < this.sz; i++) {
+                    s += "\n" + this.b[i].toString();
+                }
+                return s;
+            }
+
+            swap(i, k) {
+                let temp = this.b[i];
+                this.b[i] = this.b[k];
+                this.b[k] = temp;
+            }
+
+            remove(i) {
+                this.b[i] = this.b[this.sz - 1];
+                this.sz -= 1;
+            }
+
+            static cameBefore(x, y) {
+                return Semester.less(x.firstSemester(), y.firstSemester());
+            }
+
+            static leftBefore(x, y) {
+                return Semester.less(x.lastSemester(), y.lastSemester());
+            }
+
+            sort(sortChoice) {
+                this.sort2 = this.sort1;
+                this.sort1 = this.sort0;
+                this.sort0 = sortChoice;
+                this.quickSort();
+            }
+
+            copy() {
+                let c = new DynArray();
+                for (let i = 0; i < this.sz; i++) {
+                    c.add(this.b[i]);
+                }
+                return c;
+            }
+
+            numTitle(tt) {
+                let n = 0;
+                for (let i = 0; i < this.sz; i++) {
+                    if (this.element(i).lastTitle === tt) {
+                        n += 1;
+                    }
+                }
+                return n;
+            }
+
+            partition(h, k) {
+                let q = h + 1;
+                let p = k - 1;
+
+                while (q <= p) {
+                    if (this.lessTest(q, h)) {
+                        q += 1;
+                    } else if (this.lessTest(h, p)) {
+                        p -= 1;
+                    } else {
+                        this.swap(p, q);
+                        q += 1;
+                        p -= 1;
+                    }
+                }
+                if (p + 2 === q) {
+                    p += 1;
                 }
 
-                add(f) {
-                    if (this.sz === this.b.length) {
-                        let bTemp = this.b;
-                        this.b = new Array(this.b.length * 4);
-                        if (this.sz > 0) {
-                            bTemp.slice(0, this.sz).forEach((item, index) => {
-                                this.b[index] = item;
-                            });
+                this.swap(h, p);
+                return p;
+            }
+
+            quickSort() {
+                let t = new LinkedList();
+                t.add(new Coordinates(0, this.size()));
+
+                while (t.size() !== 0) {
+                    let co = t.remove();
+                    let h = co.x;
+                    let k = co.y;
+                    if (k === h) {
+                        // Do nothing
+                    } else if (k - h <= 2) {
+                        if (this.lessTest(k - 1, h)) {
+                            this.swap(k - 1, h);
                         }
-                    }
-                    this.b[this.sz] = f;
-                    this.sz += 1;
-                }
-
-                element(i) {
-                    return this.b[i];
-                }
-
-                size() {
-                    return this.sz;
-                }
-
-                toString() {
-                    let s = '';
-                    for (let i = 0; i < this.sz; i++) {
-                        s += "\n" + this.b[i].toString();
-                    }
-                    return s;
-                }
-
-                swap(i, k) {
-                    let temp = this.b[i];
-                    this.b[i] = this.b[k];
-                    this.b[k] = temp;
-                }
-
-                remove(i) {
-                    this.b[i] = this.b[this.sz - 1];
-                    this.sz -= 1;
-                }
-
-                static cameBefore(x, y) {
-                    return Semester.less(x.firstSemester(), y.firstSemester());
-                }
-
-                static leftBefore(x, y) {
-                    return Semester.less(x.lastSemester(), y.lastSemester());
-                }
-
-                sort(sortChoice) {
-                    this.sort2 = this.sort1;
-                    this.sort1 = this.sort0;
-                    this.sort0 = sortChoice;
-                    this.quickSort();
-                }
-
-                copy() {
-                    let c = new DynArray();
-                    for (let i = 0; i < this.sz; i++) {
-                        c.add(this.b[i]);
-                    }
-                    return c;
-                }
-
-                numTitle(tt) {
-                    let n = 0;
-                    for (let i = 0; i < this.sz; i++) {
-                        if (this.element(i).lastTitle === tt) {
-                            n += 1;
-                        }
-                    }
-                    return n;
-                }
-
-                partition(h, k) {
-                    let q = h + 1;
-                    let p = k - 1;
-
-                    while (q <= p) {
-                        if (this.lessTest(q, h)) {
-                            q += 1;
-                        } else if (this.lessTest(h, p)) {
-                            p -= 1;
+                    } else {
+                        let j = this.partition(h, k);
+                        if (k - j - 1 > j - h) {
+                            t.prepend(new Coordinates(j + 1, k));
+                            t.prepend(new Coordinates(h, j));
                         } else {
-                            this.swap(p, q);
-                            q += 1;
-                            p -= 1;
+                            t.prepend(new Coordinates(h, j));
+                            t.prepend(new Coordinates(j + 1, k));
                         }
                     }
-                    if (p + 2 === q) {
-                        p += 1;
-                    }
-
-                    this.swap(h, p);
-                    return p;
-                }
-
-                quickSort() {
-                    let t = new LinkedList();
-                    t.add(new Coordinates(0, this.size()));
-
-                    while (t.size() !== 0) {
-                        let co = t.remove();
-                        let h = co.x;
-                        let k = co.y;
-                        if (k === h) {
-                            // Do nothing
-                        } else if (k - h <= 2) {
-                            if (this.lessTest(k - 1, h)) {
-                                this.swap(k - 1, h);
-                            }
-                        } else {
-                            let j = this.partition(h, k);
-                            if (k - j - 1 > j - h) {
-                                t.prepend(new Coordinates(j + 1, k));
-                                t.prepend(new Coordinates(h, j));
-                            } else {
-                                t.prepend(new Coordinates(h, j));
-                                t.prepend(new Coordinates(j + 1, k));
-                            }
-                        }
-                    }
-                }
-
-                less(i, j, s) {
-                    switch (s) {
-                        case CSCanvas.BYNAME:
-                            return this.b[i].name.localeCompare(this.b[j].name) < 0;
-                        case CSCanvas.BYTITLE:
-                            return this.b[j].lastTitle < this.b[i].lastTitle;
-                        case CSCanvas.BYFIRSTSEMESTER:
-                            return DynArray.cameBefore(this.b[i], this.b[j]);
-                        case CSCanvas.BYLASTSEMESTER:
-                            return DynArray.leftBefore(this.b[j], this.b[i]);
-                        case CSCanvas.BYLENGTH:
-                            return this.b[j].numSemesters() < this.b[i].numSemesters();
-                        default:
-                            return true;
-                    }
-                }
-
-                lessTest(i, j) {
-                    if (this.less(i, j, this.sort0)) return true;
-                    if (this.less(j, i, this.sort0)) return false;
-
-                    if (this.less(i, j, this.sort1)) return true;
-                    if (this.less(j, i, this.sort1)) return false;
-
-                    return this.less(i, j, this.sort2);
                 }
             }
+
+            less(i, j, s) {
+                switch (s) {
+                    case CSCanvas.BYNAME:
+                        return this.b[i].name.localeCompare(this.b[j].name) < 0;
+                    case CSCanvas.BYTITLE:
+                        return this.b[j].lastTitle < this.b[i].lastTitle;
+                    case CSCanvas.BYFIRSTSEMESTER:
+                        return DynArray.cameBefore(this.b[i], this.b[j]);
+                    case CSCanvas.BYLASTSEMESTER:
+                        return DynArray.leftBefore(this.b[j], this.b[i]);
+                    case CSCanvas.BYLENGTH:
+                        return this.b[j].numSemesters() < this.b[i].numSemesters();
+                    default:
+                        return true;
+                }
+            }
+
+            lessTest(i, j) {
+                if (this.less(i, j, this.sort0)) return true;
+                if (this.less(j, i, this.sort0)) return false;
+
+                if (this.less(i, j, this.sort1)) return true;
+                if (this.less(j, i, this.sort1)) return false;
+
+                return this.less(i, j, this.sort2);
+            }
+        }
 
         
 
@@ -606,160 +613,160 @@
 
 
 
-    class TitleTime {
-        static FIELD = 1;
-        static LECTURER = 2;
-        static SRLECTURER = 3;
-        static INSTRUCTOR = 4;
-        static ASSTPROF = 5;
-        static ASSOCPROF = 6;
-        static FULLPROF = 7;
-        static EMERITUS = 8;
-        static numTitles = 8;
-        static NOLEAVE = 1;
-        static SABBATIC = 2;
-        static OTHERLEAVE = 3;
+        class TitleTime {
+            static FIELD = 1;
+            static LECTURER = 2;
+            static SRLECTURER = 3;
+            static INSTRUCTOR = 4;
+            static ASSTPROF = 5;
+            static ASSOCPROF = 6;
+            static FULLPROF = 7;
+            static EMERITUS = 8;
+            static numTitles = 8;
+            static NOLEAVE = 1;
+            static SABBATIC = 2;
+            static OTHERLEAVE = 3;
 
-        constructor(t, s1, s2, st = TitleTime.NOLEAVE) {
-            this.firstSemester = s1;
-            this.lastSemester = s2;
-            this.title = t;
-            this.status = st;
-        }
-
-        static makeTitle(title) {
-            switch (title) {
-                case TitleTime.LECTURER: return "Lecturer";
-                case TitleTime.SRLECTURER: return "Sr. Lecturer";
-                case TitleTime.INSTRUCTOR: return "Instructor";
-                case TitleTime.ASSTPROF: return "Assis. Prof.";
-                case TitleTime.ASSOCPROF: return "Assoc. Prof.";
-                case TitleTime.FULLPROF: return "Full Prof.";
-                case TitleTime.EMERITUS: return "Prof. Emeritus";
-                case TitleTime.FIELD: return "Field Member";
-                default: return "Error. unknown";
-            }
-        }
-
-        setStatus(st) {
-            this.status = st;
-        }
-
-        makeTitle() {
-            return TitleTime.makeTitle(this.title);
-        }
-
-        makeStatus() {
-            switch (this.status) {
-                case TitleTime.NOLEAVE: return "noleave";
-                case TitleTime.SABBATIC: return "sabbatic";
-                case TitleTime.OTHERLEAVE: return "leave";
-                default: return "Error: status " + this.status + " unknown";
-            }
-        }
-
-        toString() {
-            return `${this.makeTitle()} ${this.makeStatus()} ${this.firstSemester}--${this.lastSemester}`;
-        }
-
-        titleColor() {
-            switch (this.title) {
-                case TitleTime.LECTURER: return "rgb(52,236,2)";
-                case TitleTime.SRLECTURER: return "rgb(2,140,12)";
-                case TitleTime.INSTRUCTOR: return "rgb(56,50,247)";
-                case TitleTime.ASSTPROF: return "rgb(250,173,110)";
-                case TitleTime.ASSOCPROF: return "rgb(250,44,28)";
-                case TitleTime.FULLPROF: return "rgb(149,14,4)";
-                case TitleTime.EMERITUS: return "rgb(89,89,89)";
-                case TitleTime.FIELD: return "rgb(104,217,249)";
-                default: return "rgb(0,0,0)";
-            }
-        }
-
-        static titleColor(t) {
-            let temp = new TitleTime(t, null, null);
-            return temp.titleColor();
-        }
-    }
-
-    class Faculty {
-        constructor(name, t, st, s1, s2, t1 = null, s1Value = null, t2 = null, s2Value = null) {
-            this.name = name;
-            this.periods = new LinkedList();
-            var firstSemester, lastSemester;
-
-            if (t1 !== null && s1Value !== null && t2 !== null && s2Value !== null) {
-                firstSemester = t1 === "S" ? new Semester(0, s1Value) : new Semester(6, s1Value);
-                lastSemester = t2 === "S" ? new Semester(0, s2Value) : new Semester(6, s2Value);
-            } else {
-                firstSemester = s1;
-                lastSemester = s2;
+            constructor(t, s1, s2, st = TitleTime.NOLEAVE) {
+                this.firstSemester = s1;
+                this.lastSemester = s2;
+                this.title = t;
+                this.status = st;
             }
 
-            if (st !== null) {
-                this.periods.append(new TitleTime(t, firstSemester, lastSemester, st));
-            } else {
-                this.periods.append(new TitleTime(t, firstSemester, lastSemester));
-            }
-
-            this.lastTitle = t;
-        }
-
-        addPeriod(t, st, s1, s2) {
-            this.periods.append(new TitleTime(t, s1, s2, st));
-            this.lastTitle = t;
-        }
-
-        toString() {
-            var res= this.name;
-	        let iter= new LinkedListIterator(this.periods);
-	        while (iter.okay()) {
-		        let tt= iter.data();
-        		res= res + " " + tt.toString();
-		        iter.next();
-		    }
-
-            return res;
-        }
-
-        firstSemester() {
-            return this.periods.head.data.firstSemester;
-        }
-
-        lastSemester() {
-            return this.periods.tail.data.lastSemester;
-        }
-
-        numSemesters() {
-            let num = 0;
-            let iter = this.periods[Symbol.iterator]();
-            let result;
-
-            while (!(result = iter.next()).done) {
-                let tt = result.value;
-                if (tt.status !== TitleTime.OTHERLEAVE) {
-                    num = num + Semester.difference(tt.firstSemester, tt.lastSemester) + 1;
+            static makeTitle(title) {
+                switch (title) {
+                    case TitleTime.LECTURER: return "Lecturer";
+                    case TitleTime.SRLECTURER: return "Sr. Lecturer";
+                    case TitleTime.INSTRUCTOR: return "Instructor";
+                    case TitleTime.ASSTPROF: return "Assis. Prof.";
+                    case TitleTime.ASSOCPROF: return "Assoc. Prof.";
+                    case TitleTime.FULLPROF: return "Full Prof.";
+                    case TitleTime.EMERITUS: return "Prof. Emeritus";
+                    case TitleTime.FIELD: return "Field Member";
+                    default: return "Error. unknown";
                 }
             }
 
-            return num;
-        }
+            setStatus(st) {
+                this.status = st;
+            }
 
-        lastTitle() {
-            let ans = 0;
-            let iter = this.periods[Symbol.iterator]();
-            let result;
+            makeTitle() {
+                return TitleTime.makeTitle(this.title);
+            }
 
-            while (!(result = iter.next()).done) {
-                let tt = result.value;
-                if (CSCanvas.isWithin(tt)) {
-                    ans = tt.title;
+            makeStatus() {
+                switch (this.status) {
+                    case TitleTime.NOLEAVE: return "noleave";
+                    case TitleTime.SABBATIC: return "sabbatic";
+                    case TitleTime.OTHERLEAVE: return "leave";
+                    default: return "Error: status " + this.status + " unknown";
                 }
             }
 
-            return ans;
+            toString() {
+                return `${this.makeTitle()} ${this.makeStatus()} ${this.firstSemester}--${this.lastSemester}`;
+            }
+
+            titleColor() {
+                switch (this.title) {
+                    case TitleTime.LECTURER: return "rgb(52,236,2)";
+                    case TitleTime.SRLECTURER: return "rgb(2,140,12)";
+                    case TitleTime.INSTRUCTOR: return "rgb(56,50,247)";
+                    case TitleTime.ASSTPROF: return "rgb(250,173,110)";
+                    case TitleTime.ASSOCPROF: return "rgb(250,44,28)";
+                    case TitleTime.FULLPROF: return "rgb(149,14,4)";
+                    case TitleTime.EMERITUS: return "rgb(89,89,89)";
+                    case TitleTime.FIELD: return "rgb(104,217,249)";
+                    default: return "rgb(0,0,0)";
+                }
+            }
+
+            static titleColor(t) {
+                let temp = new TitleTime(t, null, null);
+                return temp.titleColor();
+            }
         }
-    }
+
+        class Faculty {
+            constructor(name, t, st, s1, s2, t1 = null, s1Value = null, t2 = null, s2Value = null) {
+                this.name = name;
+                this.periods = new LinkedList();
+                var firstSemester, lastSemester;
+
+                if (t1 !== null && s1Value !== null && t2 !== null && s2Value !== null) {
+                    firstSemester = t1 === "S" ? new Semester(0, s1Value) : new Semester(6, s1Value);
+                    lastSemester = t2 === "S" ? new Semester(0, s2Value) : new Semester(6, s2Value);
+                } else {
+                    firstSemester = s1;
+                    lastSemester = s2;
+                }
+
+                if (st !== null) {
+                    this.periods.append(new TitleTime(t, firstSemester, lastSemester, st));
+                } else {
+                    this.periods.append(new TitleTime(t, firstSemester, lastSemester));
+                }
+
+                this.lastTitle = t;
+            }
+
+            addPeriod(t, st, s1, s2) {
+                this.periods.append(new TitleTime(t, s1, s2, st));
+                this.lastTitle = t;
+            }
+
+            toString() {
+                var res= this.name;
+                let iter= new LinkedListIterator(this.periods);
+                while (iter.okay()) {
+                    let tt= iter.data();
+                    res= res + " " + tt.toString();
+                    iter.next();
+                }
+
+                return res;
+            }
+
+            firstSemester() {
+                return this.periods.head.data.firstSemester;
+            }
+
+            lastSemester() {
+                return this.periods.tail.data.lastSemester;
+            }
+
+            numSemesters() {
+                let num = 0;
+                let iter = this.periods[Symbol.iterator]();
+                let result;
+
+                while (!(result = iter.next()).done) {
+                    let tt = result.value;
+                    if (tt.status !== TitleTime.OTHERLEAVE) {
+                        num = num + Semester.difference(tt.firstSemester, tt.lastSemester) + 1;
+                    }
+                }
+
+                return num;
+            }
+
+            lastTitle() {
+                let ans = 0;
+                let iter = this.periods[Symbol.iterator]();
+                let result;
+
+                while (!(result = iter.next()).done) {
+                    let tt = result.value;
+                    if (CSCanvas.isWithin(tt)) {
+                        ans = tt.title;
+                    }
+                }
+
+                return ans;
+            }
+        }
 
 
 
@@ -1294,14 +1301,14 @@
 
             var cMain = document.getElementById("canvasMain");
             var ctxMain = cMain.getContext("2d");
-            ctxMain.fillStyle = "Yellow";//"LightYellow";
+            ctxMain.fillStyle = "Yellow"; //"LightYellow";
             ctxMain.fillRect(0, 0, cMain.width, cMain.height);
 
-            ctxMain.fillStyle = "Black";
+            ctxMain.fillStyle = rgb(100,0,0); 
             ctxMain.font = "10pt monospace";
             let lineHeight = computeFontHeight(ctxMain);
 
-            if (false) {
+            if (true) {
 
                 // ctxHdr.fillStyle = "Black";
                 // ctxHdr.font = "10pt sans-serif";
