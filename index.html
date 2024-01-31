@@ -117,6 +117,14 @@
             return '#' + toHex(r) + toHex(g) + toHex(b);
         }
 
+        // Converted from Coordinates.java by blackbox.ai:
+        class Coordinates {
+            constructor(h, k) {
+                this.x = h;
+                this.y = k;
+            }
+        }
+
         // Converted from Semester.java by codeconvert.ai
         class Semester {
             //constructor() {
@@ -791,11 +799,11 @@
             // static firstSemScrolled;
             // backBuffer;
             // backG;
-            // static BYNAME = 0;
-            // static BYFIRSTSEMESTER = 1;
-            // static BYLASTSEMESTER = 2;
-            // static BYLENGTH = 3;
-            // static BYTITLE = 4;
+            static BYNAME = 0;
+            static BYFIRSTSEMESTER = 1;
+            static BYLASTSEMESTER = 2;
+            static BYLENGTH = 3;
+            static BYTITLE = 4;
             // static sortMethod = CSCanvas.BYNAME;
             // static beginx;
             // static beginy;
@@ -809,48 +817,49 @@
             // static message1 = "";
             // static message2 = "";
 
-            constructor() {
+            constructor(canvasHdr, canvasMain) {
+                this.ctxHdr = canvasHdr.getContext("2d");
+                this.ctxMain = canvasMain.getContext("2d");
                 this.error = false;
                 this.message1 = "";
                 this.lastPossibleSem = new Semester(0, 1999);
-            }
 
-            //   constructor(d) {
-            //     //super();
-            //     drawing = d;
-            //     setBackground(new Color(250, 250, 210));
-            //     let todaysDate = new Date();
-            
-            //     lastSem = new Semester(todaysDate.getMonth(),
-            //       todaysDate.getFullYear());
-            //     bigFaculty = parse();
-            //     if (bigFaculty != null) {
-            //       faculty = bigFaculty.copy();
-            //       faculty.sort(BYFIRSTSEMESTER);
-            //       firstPossibleSem = faculty.element(0).firstSemester();
-            //       firstSem = firstPossibleSem;
-            //       faculty.sort(BYNAME);
-            //     }
-            //     font = new Font("Monospaced", Font.PLAIN, 10);
-            //     fontM = getFontMetrics(font);
-            //     charWidth = fontM.charWidth('1');
-            //     widthOne = 2 + charWidth;
-            //     fontHeight = fontM.getHeight();
-            //     beginy = 6 * fontHeight + 5;
-            //     beginx = 150;
-            //     liney = fontHeight;
-            //     startVerticals = 6 * fontHeight;
-            //     length = fontHeight * (5 + faculty.size()) + 5;
-            //     let diff = Semester.difference(firstSem, lastSem);
-            //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
-            //     maxTitleWidth = 20 * fontM.charWidth('1');
-            //   }
+                //     //super();
+                //     drawing = d;
+                //     setBackground(new Color(250, 250, 210));
+                //     let todaysDate = new Date();
+                
+                //     lastSem = new Semester(todaysDate.getMonth(),
+                //       todaysDate.getFullYear());
+                this.bigFaculty = this.parse();
+                if (this.bigFaculty != null) {
+                    this.faculty = this.bigFaculty.copy();
+                    this.faculty.sort(CSCanvas.BYFIRSTSEMESTER);
+                    this.firstPossibleSem = this.faculty.element(0).firstSemester();
+                    this.firstSem = this.firstPossibleSem;
+                    this.faculty.sort(CSCanvas.BYNAME);
+                }
+                //     font = new Font("Monospaced", Font.PLAIN, 10);
+                //     fontM = getFontMetrics(font);
+                //     charWidth = fontM.charWidth('1');
+                //     widthOne = 2 + charWidth;
+                //     fontHeight = fontM.getHeight();
+                this.fontHeight = computeFontHeight(this.ctxMain);
+                this.beginy = 6 * this.fontHeight + 5;
+                this.beginx = 150;
+                this.liney = this.fontHeight;
+                this.startVerticals = 6 * this.fontHeight;
+                //     length = fontHeight * (5 + faculty.size()) + 5;
+                //     let diff = Semester.difference(firstSem, lastSem);
+                //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
+                //     maxTitleWidth = 20 * fontM.charWidth('1');
+            }
 
             //   paint(g) {
             //     update(g);
             //   }
 
-            //   paintCanvas(g) {
+            paintCanvas() {
             //     m_g = g;
             //     if (error) {
             //       m_g.drawString("Sorry, there is an error in the input.", 2, liney);
@@ -861,13 +870,13 @@
             //     let temp = drawing.scrollH.getValue();
             //     for (let i = 0; i < temp; i = i + 1) firstSemScrolled = firstSemScrolled.next();
             //     liney = fontHeight;
-            //     paintLegend();
+                this.paintLegend();
             //     printHeaders(3 * liney);
             //     beginy = 6 * fontHeight + 5;
             //     liney = beginy;
             //     drawFaculty(faculty);
             //     drawVerticals();
-            //   }
+            }
 
             //   update(g) {
             //     let w = getBounds().width;
@@ -948,12 +957,12 @@
             //     m_g.drawString(f.name, k, liney);
             //   }
 
-            //   static paintLegend() {
-            //     let liney = fontHeight;
-            //     let fm = m_g.getFontMetrics();
-            //     let cm = 2;
-            //     m_g.drawString("No. of faculty: " + faculty.size(), cm, fontHeight * 3);
-            //     let noOnLine = 0;
+            paintLegend() {
+                let liney = this.fontHeight;
+                //let fm = m_g.getFontMetrics();
+                let cm = 2;
+                this.ctxHdr.fillText("No. of faculty: " + this.faculty.length, cm, this.fontHeight * 3);
+                let noOnLine = 0;
             //     let tt = 1;
             //     while (tt <= TitleTime.numTitles) {
             //       if (someoneHas(tt)) {
@@ -992,7 +1001,7 @@
             //       drawStatusLines(m_g, cm + 11, cm + 28, TitleTime.OTHERLEAVE, liney);
             //       drawStatusLines(m_g, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
             //     }
-            //   }
+            }
 
             //   static drawStatusLines(m_g, h1, h2, st, liney) {
             //     if (st == TitleTime.SABBATIC) {
@@ -1293,19 +1302,19 @@
 
         function main() {
 
-            var cHdr = document.getElementById("canvasHdr");
-            var ctxHdr = cHdr.getContext("2d");
+            var canvasHdr = document.getElementById("canvasHdr");
+            var ctxHdr = canvasHdr.getContext("2d");
 
             ctxHdr.fillStyle = "Yellow"; //"LightYellow";
-            ctxHdr.fillRect(0, 0, cHdr.width, cHdr.height);
+            ctxHdr.fillRect(0, 0, canvasHdr.width, canvasHdr.height);
 
-            var cMain = document.getElementById("canvasMain");
-            var ctxMain = cMain.getContext("2d");
+            var canvasMain = document.getElementById("canvasMain");
+            var ctxMain = canvasMain.getContext("2d");
             ctxMain.fillStyle = "Yellow"; //"LightYellow";
-            ctxMain.fillRect(0, 0, cMain.width, cMain.height);
+            ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
 
-            ctxMain.fillStyle = rgb(100,0,0); 
-            ctxMain.font = "10pt monospace";
+            // ctxMain.fillStyle = rgb(100,0,0); 
+            ctxMain.font = "10pt sans-serif";
             let lineHeight = computeFontHeight(ctxMain);
 
             if (true) {
@@ -1324,8 +1333,8 @@
                 }
             }
 
-            var canvas = new CSCanvas();
-            canvas.parse();
+            var canvas = new CSCanvas(canvasHdr, canvasMain);
+            canvas.paintCanvas();
 
         }
         main();
