@@ -11,6 +11,11 @@
     This version attempts to recreate the functionality and appearance of the original 
     as accurately as reasonably possible.
 
+    The code here is mostly a direct translation of the original Java code to JavaScript.
+    Several automated tools were used to convert the Java code to JavaScript, including
+    codeconvert.ai, blackbox.ai, and Github Copilot. The resulting JavaScript code was 
+    then manually edited to fix errors and improve readability.
+
     Mark Riordan  January 2024
 --> 
 <head>
@@ -223,7 +228,7 @@
                     this.head = new LinkedListNode(value);
                     this.tail = this.head;
                 }
-                this.size = value === null ? 0 : 1;
+                this.sz = value === null ? 0 : 1;
             }
 
             prepend(value) {
@@ -233,7 +238,7 @@
                 if (this.tail === null) {
                     this.tail = newNode;
                 }
-                this.size++;
+                this.sz++;
             }
 
             change(value) {
@@ -250,7 +255,7 @@
                     this.tail.next = new LinkedListNode(value);
                     this.tail = this.tail.next;
                 }
-                this.size++;
+                this.sz++;
             }
 
             remove() {
@@ -259,7 +264,7 @@
                 }
                 const value = this.head.value;
                 this.head = this.head.next;
-                this.size--;
+                this.sz--;
                 if (this.head === null) {
                     this.tail = null;
                 }
@@ -289,13 +294,13 @@
             }
 
             size() {
-                return this.size;
+                return this.sz;
             }
 
             clear() {
                 this.head = null;
                 this.tail = null;
-                this.size = 0;
+                this.sz = 0;
             }
 
             truncate(n) {
@@ -303,7 +308,7 @@
                     this.clear();
                     return this;
                 }
-                this.size = n;
+                this.sz = n;
                 let current = this.head;
                 while (n !== 1) {
                     n--;
@@ -315,14 +320,14 @@
             }
 
             removeLast() {
-                if (this.size === 0) {
+                if (this.sz === 0) {
                     return null;
                 }
-                if (this.size === 1) {
+                if (this.sz === 1) {
                     const value = this.head.value;
                     this.head = null;
                     this.tail = null;
-                    this.size--;
+                    this.sz--;
                     return value;
                 }
                 let current = this.head;
@@ -332,7 +337,7 @@
                 const value = this.tail.value;
                 this.tail = current;
                 this.tail.next = null;
-                this.size--;
+                this.sz--;
                 return value;
             }
 
@@ -492,7 +497,8 @@
 
             quickSort() {
                 let t = new LinkedList();
-                t.add(new Coordinates(0, this.size()));
+                let mysize = this.size();
+                t.append(new Coordinates(0, this.size()));
 
                 while (t.size() !== 0) {
                     let co = t.remove();
@@ -579,7 +585,7 @@
                 }
 
                 let token = this.str.substring(startIndex, this.index);
-                console.log("nextToken: startIndex=" + startIndex +" index="+this.index+" token="+token);
+                //console.log("nextToken: startIndex=" + startIndex +" index="+this.index+" token="+token);
                 if (token.length === 0) {
                     return null;
                 }
@@ -737,12 +743,14 @@
                 return res;
             }
 
+            // First semester for this faculty member
             firstSemester() {
-                return this.periods.head.data.firstSemester;
+                return this.periods.inspect().firstSemester;
             }
 
+            // Last semester for this faculty member
             lastSemester() {
-                return this.periods.tail.data.lastSemester;
+                return this.periods.inspectLast().lastSemester;
             }
 
             numSemesters() {
@@ -960,27 +968,30 @@
             paintLegend() {
                 let liney = this.fontHeight;
                 //let fm = m_g.getFontMetrics();
+                // Note: this text never actually showed up on the Java applet. Dunno why.
                 let cm = 2;
-                this.ctxHdr.fillText("No. of faculty: " + this.faculty.length, cm, this.fontHeight * 3);
+                let msg = "No. of faculty: " + this.faculty.size();
+                this.ctxHdr.fillStyle = rgb(0, 0, 0);
+                this.ctxHdr.fillText(msg, cm, this.fontHeight * 3);
                 let noOnLine = 0;
-            //     let tt = 1;
-            //     while (tt <= TitleTime.numTitles) {
-            //       if (someoneHas(tt)) {
-            //         let n = faculty.numTitle(tt);
-            //         let title = TitleTime.makeTitle(tt);
-            //         let num = faculty.numTitle(tt);
-            //         m_g.setColor(TitleTime.titleColor(tt));
-            //         m_g.drawString(title + " (" + num + ")  ", cm, liney);
-            //         cm = cm + maxTitleWidth;
-            //         noOnLine = noOnLine + 1;
-            //         if (noOnLine == 4) {
-            //           liney = liney + fontHeight;
-            //           noOnLine = 0;
-            //           cm = 2;
-            //         }
-            //       }
-            //       tt = tt + 1;
-            //     }
+                let tt = 1;
+                while (tt <= TitleTime.numTitles) {
+                  if (this.someoneHas(tt)) {
+                    let n = this.faculty.numTitle(tt);
+                    let title = TitleTime.makeTitle(tt);
+                    let num = this.faculty.numTitle(tt);
+                    m_g.setColor(TitleTime.titleColor(tt));
+                    m_g.drawString(title + " (" + num + ")  ", cm, liney);
+                    cm = cm + maxTitleWidth;
+                    noOnLine = noOnLine + 1;
+                    if (noOnLine == 4) {
+                      liney = liney + fontHeight;
+                      noOnLine = 0;
+                      cm = 2;
+                    }
+                  }
+                  tt = tt + 1;
+                }
             //     if (someoneHasStatus(TitleTime.SABBATIC)) {
             //       liney = 4 * fontHeight;
             //       cm = 2;
@@ -1064,28 +1075,28 @@
             //     drawStatusLines(m_g, j, k, tt.status, liney);
             //   }
 
-            //   static isWithin(tt) {
-            //     if (Semester.less(tt.lastSemester, firstSem))
-            //       return false;
-            //     if (Semester.less(lastSem, tt.firstSemester))
-            //       return false;
-            //     return true;
-            //   }
+            isWithin(tt) {
+                if (Semester.less(tt.lastSemester, this.firstSem))
+                    return false;
+                if (Semester.less(this.lastSem, tt.firstSemester))
+                    return false;
+                return true;
+            }
 
-            //   static someoneHas(tt) {
-            //     for (let i = 0; i != faculty.size(); i = i + 1) {
-            //       let f = faculty.element(i);
-            //       let iter = new LinkedListIterator(f.periods);
-            //       while (iter.okay()) {
-            //         if (isWithin(iter.data()) &&
-            //           iter.data().title == tt) {
-            //           return true;
-            //         }
-            //         iter.next();
-            //       }
-            //     }
-            //     return false;
-            //   }
+            someoneHas(tt) {
+                for (let i = 0; i != this.faculty.size(); i = i + 1) {
+                    let f = this.faculty.element(i);
+                    let iter = new LinkedListIterator(f.periods);
+                    while (iter.okay()) {
+                        if (this.isWithin(iter.data()) &&
+                            iter.data().title == tt) {
+                            return true;
+                        }
+                        iter.next();
+                    }
+                }
+                return false;
+            }
 
             //   static someoneHasStatus(st) {
             //     for (let i = 0; i != faculty.size(); i = i + 1) {
@@ -1199,12 +1210,12 @@
 
 
             parse() /* returns a DynArray */ {
-                console.log("parse here");
+                //console.log("parse here");
                 let d = new DynArray();
                 let t = new GriesTokenizer(strFacList);
                 while (t.hasMoreTokens()) {
                     let name = t.nextWord().replace('=', ' ');
-                    console.log("parse: name=" + name);
+                    //console.log("parse: name=" + name);
 
                     let title = this.readTitle(t, name);
                     if (title == -1) return null;
@@ -1243,7 +1254,7 @@
                     }
                     d.add(f);
                 }
-                console.log("d=" + d);
+                //console.log("d=" + d);
                 //alert("d=" + d);
                 return d;
             }
