@@ -11,7 +11,7 @@
     This version attempts to recreate the functionality and appearance of the original 
     as accurately as reasonably possible.
 
-    The code here is mostly a direct translation of the original Java code to JavaScript.
+    Most of the code here is a translation of the original Java code to JavaScript.
     Several automated tools were used to convert the Java code to JavaScript, including
     codeconvert.ai, blackbox.ai, and Github Copilot. The resulting JavaScript code was 
     then manually edited to fix errors and improve readability.
@@ -71,6 +71,7 @@
 </head>
 
 <body>
+    <!-- HTML text and controls -->
     <div class="topfont topinstructions">CS FACULTY OVER THE YEARS! &nbsp; Choose a range of years and a sort key and
         press OK.</div>
     <div class="topfont">&nbsp;</div>
@@ -96,14 +97,21 @@
         &nbsp;&nbsp;<button id="btnok">OK</button>
         &nbsp;&nbsp;<button id="btnabout">About ...</button>
     </div>
-    <!-- style="border:1px solid #d3d3d3;" -->
-    <canvas id="canvasHdr" width="800" height="70" style="border: 0px; margin: 0px; clear: both">
-    </canvas>
-    <div id="divMain"
-        style="max-height: 400px; max-width: 800px; overflow: scroll; position: relative; border: 0px; margin: 0px">
+    <!-- The canvases on which we will draw the faculty info. 
+        I use two canvases, one for the header and one for the main display.
+        Each is wrapped in a div.
+        Because I have not found a decent way to position one div directly below another,
+        I wrap the two divs in a third div, and use the third div's background color
+        to mask the thin gap between the two divs. -->
+    -->
+    <div id="divWrapper" style="background-color: #fafad2;">
+    <div id="divHdr"><canvas id="canvasHdr" width="800" height="80" style="border: 0px; margin: 0px; clear: both">
+    </canvas></div><div id="divMain"
+        style="max-height: 400px; max-width: 800px; overflow: scroll; ">
         <canvas id="canvasMain" width="800" height="900" overflow: scroll style="clear:both; border: 0px; margin: 0px">
             Your browser does not support the HTML canvas tag.</canvas>
     </div>
+</div>
 
     <script>
         // Given a context, compute the number of pixels between consecutive lines of text,
@@ -685,15 +693,15 @@
 
             titleColor() {
                 switch (this.title) {
-                    case TitleTime.LECTURER: return "rgb(52,236,2)";
-                    case TitleTime.SRLECTURER: return "rgb(2,140,12)";
-                    case TitleTime.INSTRUCTOR: return "rgb(56,50,247)";
-                    case TitleTime.ASSTPROF: return "rgb(250,173,110)";
-                    case TitleTime.ASSOCPROF: return "rgb(250,44,28)";
-                    case TitleTime.FULLPROF: return "rgb(149,14,4)";
-                    case TitleTime.EMERITUS: return "rgb(89,89,89)";
-                    case TitleTime.FIELD: return "rgb(104,217,249)";
-                    default: return "rgb(0,0,0)";
+                    case TitleTime.LECTURER: return rgb(52,236,2);
+                    case TitleTime.SRLECTURER: return rgb(2,140,12);
+                    case TitleTime.INSTRUCTOR: return rgb(56,50,247);
+                    case TitleTime.ASSTPROF: return rgb(250,173,110);
+                    case TitleTime.ASSOCPROF: return rgb(250,44,28);
+                    case TitleTime.FULLPROF: return rgb(149,14,4);
+                    case TitleTime.EMERITUS: return rgb(89,89,89);
+                    case TitleTime.FIELD: return rgb(104,217,249);
+                    default: return rgb(0,0,0);
                 }
             }
 
@@ -862,7 +870,22 @@
                 //     length = fontHeight * (5 + faculty.size()) + 5;
                 //     let diff = Semester.difference(firstSem, lastSem);
                 //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
-                //     maxTitleWidth = 20 * fontM.charWidth('1');
+                let ctx = this.ctxMain;
+                let metrics = ctx.measureText("1");
+                this.maxTitleWidth = 20 * metrics.width;
+            }
+
+            setColor(color) {
+                this.ctxHdr.fillStyle = color;
+                this.ctxMain.fillStyle = color;
+            }
+
+            drawStringHdr(s, x, y) {
+                this.ctxHdr.fillText(s, x, y);
+            }
+
+            drawString(s, x, y) {
+                this.ctxMain.fillText(s, x, y);
             }
 
             //   paint(g) {
@@ -968,13 +991,12 @@
             //   }
 
             paintLegend() {
-                let liney = this.fontHeight;
-                //let fm = m_g.getFontMetrics();
                 // Note: this text never actually showed up on the Java applet. Dunno why.
-                let cm = 2;
-                let msg = "No. of faculty: " + this.faculty.size();
                 this.ctxHdr.fillStyle = rgb(0, 0, 0);
-                this.ctxHdr.fillText(msg, cm, this.fontHeight * 3);
+                let cm = 2;
+                let liney = this.fontHeight;
+                let msg = "No. of faculty: " + this.faculty.size();
+                this.drawStringHdr(msg, cm, this.fontHeight * 3);
                 let noOnLine = 0;
                 let tt = 1;
                 while (tt <= TitleTime.numTitles) {
@@ -982,12 +1004,12 @@
                     let n = this.faculty.numTitle(tt);
                     let title = TitleTime.makeTitle(tt);
                     let num = this.faculty.numTitle(tt);
-                    m_g.setColor(TitleTime.titleColor(tt));
-                    m_g.drawString(title + " (" + num + ")  ", cm, liney);
-                    cm = cm + maxTitleWidth;
+                    this.setColor(TitleTime.titleColor(tt));
+                    this.drawStringHdr(title + " (" + num + ")  ", cm, liney);
+                    cm = cm + this.maxTitleWidth;
                     noOnLine = noOnLine + 1;
                     if (noOnLine == 4) {
-                      liney = liney + fontHeight;
+                      liney = liney + this.fontHeight;
                       noOnLine = 0;
                       cm = 2;
                     }
@@ -1318,16 +1340,16 @@
             var canvasHdr = document.getElementById("canvasHdr");
             var ctxHdr = canvasHdr.getContext("2d");
 
-            ctxHdr.fillStyle = "Yellow"; //"LightYellow";
+            ctxHdr.font = "11pt sans-serif";
+            ctxHdr.fillStyle = rgb(250,250,210); //"LightYellow";
             ctxHdr.fillRect(0, 0, canvasHdr.width, canvasHdr.height);
 
             var canvasMain = document.getElementById("canvasMain");
             var ctxMain = canvasMain.getContext("2d");
-            ctxMain.fillStyle = "Yellow"; //"LightYellow";
+            ctxMain.fillStyle = rgb(250,250,210);//"LightYellow";
             ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
 
-            // ctxMain.fillStyle = rgb(100,0,0); 
-            ctxMain.font = "10pt sans-serif";
+            ctxMain.font = "11pt sans-serif";
             let lineHeight = computeFontHeight(ctxMain);
 
             if (true) {
