@@ -34,7 +34,7 @@
         }
     </style>
     <!-- This is the equivalent of the embedded resource faclist.txt.
-  -->
+    -->
     <script type="text/javascript" src="faclist.js"></script>
 
     <script>
@@ -100,19 +100,17 @@
     <!-- The canvases on which we will draw the faculty info. 
         I use two canvases, one for the header and one for the main display.
         Each is wrapped in a div.
-        Because I have not found a decent way to position one div directly below another,
-        I wrap the two divs in a third div, and use the third div's background color
-        to mask the thin gap between the two divs. -->
+        I have not found a decent way to position one div directly below another.
+        At one point I wrapped the two divs in a third div, and used the third div's
+        background color to mask the thin gap between the two divs -- but that caused
+        width problems, so I abandoned that approach.
     -->
-    <div id="divWrapper" style="background-color: #fafad2;">
-    <div id="divHdr"><canvas id="canvasHdr" width="800" height="80" style="border: 0px; margin: 0px; clear: both">
-    </canvas></div><div id="divMain"
-        style="max-height: 400px; max-width: 800px; overflow: scroll; ">
+    <div id="divHdr"><canvas id="canvasHdr" width="800" height="88" style="border: 0px; margin: 0px; clear: both">
+        </canvas></div>
+    <div id="divMain" style="max-height: 400px; max-width: 800px; overflow: scroll; ">
         <canvas id="canvasMain" width="800" height="900" overflow: scroll style="clear:both; border: 0px; margin: 0px">
             Your browser does not support the HTML canvas tag.</canvas>
     </div>
-</div>
-
     <script>
         // Given a context, compute the number of pixels between consecutive lines of text,
         // including any necessary leading.
@@ -859,9 +857,8 @@
                 }
                 //     font = new Font("Monospaced", Font.PLAIN, 10);
                 //     fontM = getFontMetrics(font);
-                //     charWidth = fontM.charWidth('1');
-                //     widthOne = 2 + charWidth;
-                //     fontHeight = fontM.getHeight();
+                this.charWidth = this.stringWidth('1');
+                this.widthOne = 2 + this.charWidth;
                 this.fontHeight = computeFontHeight(this.ctxMain);
                 this.beginy = 6 * this.fontHeight + 5;
                 this.beginx = 150;
@@ -870,9 +867,11 @@
                 //     length = fontHeight * (5 + faculty.size()) + 5;
                 //     let diff = Semester.difference(firstSem, lastSem);
                 //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
-                let ctx = this.ctxMain;
-                let metrics = ctx.measureText("1");
-                this.maxTitleWidth = 20 * metrics.width;
+                this.maxTitleWidth = 20 * this.stringWidth("1")
+            }
+
+            stringWidth(s) {
+                return this.ctxMain.measureText(s).width;
             }
 
             setColor(color) {
@@ -880,12 +879,15 @@
                 this.ctxMain.fillStyle = color;
             }
 
-            drawStringHdr(s, x, y) {
-                this.ctxHdr.fillText(s, x, y);
+            drawString(ctx, s, x, y) {
+                ctx.fillText(s, x, y);
             }
 
-            drawString(s, x, y) {
-                this.ctxMain.fillText(s, x, y);
+            drawLine(ctx, x1, y1, x2, y2) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
             }
 
             //   paint(g) {
@@ -899,12 +901,12 @@
             //       m_g.drawString(message1, 2, liney + fontHeight);
             //       m_g.drawString(message2, 2, liney + 2 * fontHeight);
             //     }
-            //     firstSemScrolled = firstSem;
+                this.firstSemScrolled = this.firstSem;
             //     let temp = drawing.scrollH.getValue();
             //     for (let i = 0; i < temp; i = i + 1) firstSemScrolled = firstSemScrolled.next();
-            //     liney = fontHeight;
+            this.liney = this.fontHeight;
                 this.paintLegend();
-            //     printHeaders(3 * liney);
+                this.printHeaders(3 * this.liney);
             //     beginy = 6 * fontHeight + 5;
             //     liney = beginy;
             //     drawFaculty(faculty);
@@ -933,22 +935,22 @@
             //     }
             //   }
 
-            //   static printHeaders(liney) {
-            //     let saveColor = m_g.getColor();
-            //     m_g.setColor(Color.black);
-            //     let s = firstSemScrolled;
-            //     let xF = beginx;
-            //     while (Semester.lesseq(s, lastSem)) {
-            //       m_g.drawString(s.semester(), xF + 1, liney);
-            //       let j = s.year() % 100;
-            //       m_g.drawString(((j - j % 10) / 10).toString(), xF, liney + fontHeight);
-            //       m_g.drawString((j % 10).toString(), xF, liney + 2 * fontHeight);
-            //       xF = xF + widthOne;
-            //       s = s.next();
-            //     }
-            //     liney = liney + 3 * fontHeight;
-            //     m_g.setColor(saveColor);
-            //   }
+            printHeaders(liney) {
+                //let saveColor = m_g.getColor();
+                //m_g.setColor(Color.black);
+                let s = this.firstSemScrolled;
+                let xF = this.beginx;
+                while (Semester.lesseq(s, this.lastSem)) {
+                    this.drawString(this.ctxHdr,s.semester(), xF + 1, liney);
+                    let j = s.year() % 100;
+                    this.drawString(this.ctxHdr,((j - j % 10) / 10).toString(), xF, liney + this.fontHeight);
+                    this.drawString(this.ctxHdr,(j % 10).toString(), xF, liney + 2 * this.fontHeight);
+                    xF = xF + this.widthOne;
+                    s = s.next();
+                }
+                liney = liney + 3 * this.fontHeight;
+                //m_g.setColor(saveColor);
+            }
 
             //   static drawFaculty(faculty) {
             //     let saveColor = m_g.getColor();
@@ -996,7 +998,7 @@
                 let cm = 2;
                 let liney = this.fontHeight;
                 let msg = "No. of faculty: " + this.faculty.size();
-                this.drawStringHdr(msg, cm, this.fontHeight * 3);
+                this.drawString(this.ctxHdr, msg, cm, this.fontHeight * 3);
                 let noOnLine = 0;
                 let tt = 1;
                 while (tt <= TitleTime.numTitles) {
@@ -1005,7 +1007,7 @@
                     let title = TitleTime.makeTitle(tt);
                     let num = this.faculty.numTitle(tt);
                     this.setColor(TitleTime.titleColor(tt));
-                    this.drawStringHdr(title + " (" + num + ")  ", cm, liney);
+                    this.drawString(this.ctxHdr, title + " (" + num + ")  ", cm, liney);
                     cm = cm + this.maxTitleWidth;
                     noOnLine = noOnLine + 1;
                     if (noOnLine == 4) {
@@ -1016,40 +1018,40 @@
                   }
                   tt = tt + 1;
                 }
-            //     if (someoneHasStatus(TitleTime.SABBATIC)) {
-            //       liney = 4 * fontHeight;
-            //       cm = 2;
-            //       m_g.drawString("sabbatic: ", cm, liney);
-            //       cm = cm + fm.stringWidth("sabbatic: ");
-            //       m_g.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
-            //       drawStatusLines(m_g, cm, cm + 10, TitleTime.NOLEAVE, liney);
-            //       drawStatusLines(m_g, cm + 11, cm + 28, TitleTime.SABBATIC, liney);
-            //       drawStatusLines(m_g, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
-            //     }
-            //     if (someoneHasStatus(TitleTime.OTHERLEAVE)) {
-            //       liney = 5 * fontHeight;
-            //       cm = 2;
-            //       m_g.drawString("leave: ", cm, liney);
-            //       cm = cm + fm.stringWidth("sabbatic: ");
-            //       m_g.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
-            //       drawStatusLines(m_g, cm, cm + 10, TitleTime.NOLEAVE, liney);
-            //       drawStatusLines(m_g, cm + 11, cm + 28, TitleTime.OTHERLEAVE, liney);
-            //       drawStatusLines(m_g, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
-            //     }
+                if (this.someoneHasStatus(TitleTime.SABBATIC)) {
+                  liney = 4 * this.fontHeight;
+                  cm = 2;
+                  this.drawString(this.ctxHdr, "sabbatic: ", cm, liney);
+                  cm = cm + this.stringWidth("sabbatic: ");
+                  this.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
+                  this.drawStatusLines(this.ctxHdr, cm, cm + 10, TitleTime.NOLEAVE, liney);
+                  this.drawStatusLines(this.ctxHdr, cm + 11, cm + 28, TitleTime.SABBATIC, liney);
+                  this.drawStatusLines(this.ctxHdr, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
+                }
+                if (this.someoneHasStatus(TitleTime.OTHERLEAVE)) {
+                    liney = 5 * this.fontHeight;
+                    cm = 2;
+                    this.drawString(this.ctxHdr, "leave: ", cm, liney);
+                    cm = cm + this.stringWidth("sabbatic: ");
+                    this.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
+                    this.drawStatusLines(this.ctxHdr, cm, cm + 10, TitleTime.NOLEAVE, liney);
+                    this.drawStatusLines(this.ctxHdr, cm + 11, cm + 28, TitleTime.OTHERLEAVE, liney);
+                    this.drawStatusLines(this.ctxHdr, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
+                }
             }
-
-            //   static drawStatusLines(m_g, h1, h2, st, liney) {
-            //     if (st == TitleTime.SABBATIC) {
-            //     } else {
-            //       m_g.drawLine(h1, liney - 5, h2, liney - 5);
-            //       m_g.drawLine(h1, liney - 4, h2, liney - 4);
-            //     }
-            //     if (st == TitleTime.OTHERLEAVE) {
-            //     } else {
-            //       m_g.drawLine(h1, liney - 3, h2, liney - 3);
-            //       m_g.drawLine(h1, liney - 2, h2, liney - 2);
-            //     }
-            //   }
+            
+            drawStatusLines(ctx, h1, h2, st, liney) {
+                if (st == TitleTime.SABBATIC) {
+                } else {
+                    this.drawLine(ctx, h1, liney - 5, h2, liney - 5);
+                    this.drawLine(ctx, h1, liney - 4, h2, liney - 4);
+                }
+                if (st == TitleTime.OTHERLEAVE) {
+                } else {
+                    this.drawLine(ctx, h1, liney - 3, h2, liney - 3);
+                    this.drawLine(ctx, h1, liney - 2, h2, liney - 2);
+                }
+            }
 
             //   static firstThreeDots(f) {
             //     let first = f.periods.inspect();
@@ -1122,20 +1124,20 @@
                 return false;
             }
 
-            //   static someoneHasStatus(st) {
-            //     for (let i = 0; i != faculty.size(); i = i + 1) {
-            //       let f = faculty.element(i);
-            //       let iter = new LinkedListIterator(f.periods);
-            //       while (iter.okay()) {
-            //         if (isWithin(iter.data()) &&
-            //           iter.data().status == st) {
-            //           return true;
-            //         }
-            //         iter.next();
-            //       }
-            //     }
-            //     return false;
-            //   }
+            someoneHasStatus(st) {
+                for (let i = 0; i != this.faculty.size(); i = i + 1) {
+                    let f = this.faculty.element(i);
+                    let iter = new LinkedListIterator(f.periods);
+                    while (iter.okay()) {
+                        if (this.isWithin(iter.data()) &&
+                            iter.data().status == st) {
+                            return true;
+                        }
+                        iter.next();
+                    }
+                }
+                return false;
+            }
 
             readTitle(t, name) {
                 let ret = 0;
