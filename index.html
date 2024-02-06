@@ -105,12 +105,16 @@
         background color to mask the thin gap between the two divs -- but that caused
         width problems, so I abandoned that approach.
     -->
-    <div id="divHdr"><canvas id="canvasHdr" width="800" height="88" style="border: 0px; margin: 0px; clear: both">
+    <!-- <div id="divHdr"><canvas id="canvasHdr" width="800" height="88" style="border: 0px; margin: 0px; clear: both">
         </canvas></div>
     <div id="divMain" style="max-height: 400px; max-width: 800px; overflow: scroll; ">
         <canvas id="canvasMain" width="800" height="900" overflow: scroll style="clear:both; border: 0px; margin: 0px">
             Your browser does not support the HTML canvas tag.</canvas>
-    </div>
+    </div> -->
+    <dev id="divMain">
+        <canvas id="canvasMain" width="800" height="550" overflow: scroll style="clear:both; border: 0px; margin: 0px">
+            Your browser does not support the HTML canvas tag.</canvas>
+    </dev>
     <script>
         // Given a context, compute the number of pixels between consecutive lines of text,
         // including any necessary leading.
@@ -824,7 +828,6 @@
             // static startVerticals;
             // static liney;
             // static beginFaculty;
-            // //   static colorNames = new Color(16, 4, 177);
             // static bigFaculty;
             // static faculty;
             // error = false;
@@ -834,11 +837,14 @@
             constructor(canvasHdr, canvasMain) {
                 this.ctxHdr = canvasHdr.getContext("2d");
                 this.ctxMain = canvasMain.getContext("2d");
+                this.mainHeight = canvasMain.height;
+                this.mainWidth = canvasMain.width;
                 this.error = false;
                 this.message1 = "";
                 this.firstSem = null;
                 this.lastSem = new Semester(0, 1999);
                 this.lastPossibleSem = new Semester(0, 1999);
+                this.colorNames = rgb(16, 4, 177);
 
                 //     //super();
                 //     drawing = d;
@@ -907,9 +913,9 @@
             this.liney = this.fontHeight;
                 this.paintLegend();
                 this.printHeaders(3 * this.liney);
-            //     beginy = 6 * fontHeight + 5;
-            //     liney = beginy;
-            //     drawFaculty(faculty);
+                this.beginy = 6 * this.fontHeight + 5;
+                this.liney = this.beginy;
+                this.drawFaculty(this.faculty);
             //     drawVerticals();
             }
 
@@ -952,45 +958,46 @@
                 //m_g.setColor(saveColor);
             }
 
-            //   static drawFaculty(faculty) {
-            //     let saveColor = m_g.getColor();
-            //     let i = drawing.scrollV.getValue();
-            //     let maxi = i + (drawing.c.getBounds().height - 5) / fontHeight + 1;
-            //     if (maxi > faculty.size()) maxi = faculty.size();
-            //     while (i != maxi) {
-            //       paintFaculty(faculty.element(i));
-            //       i = i + 1;
-            //       liney = liney + fontHeight;
-            //     }
-            //     m_g.setColor(saveColor);
-            //   }
+            drawFaculty(faculty) {
+                //let saveColor = m_g.getColor();
+                //let i = drawing.scrollV.getValue();
+                var i = 0;
+                let maxi = Math.trunc(i + (this.mainHeight - 5) / this.fontHeight + 1);
+                if (maxi > faculty.size()) maxi = faculty.size();
+                while (i < maxi) {
+                    this.paintFaculty(faculty.element(i));
+                    i = i + 1;
+                    this.liney = this.liney + this.fontHeight;
+                }
+                //m_g.setColor(saveColor);
+            }
 
-            //   static paintFaculty(f) {
-            //     m_g.setColor(colorNames);
-            //     let st = f.name;
-            //     let suffix = "";
-            //     if (sortMethod == BYLENGTH) suffix = " " + f.numSemesters() / 2.0;
-            //     let noChars = ((beginx) / charWidth) - suffix.length() - 4;
-            //     if (st.length() > noChars)
-            //       st = st.substring(0, noChars - 1);
-            //     m_g.drawString(st + suffix, 2, liney);
-            //     let iter = new LinkedListIterator(f.periods);
-            //     let previous = null;
-            //     while (iter.okay()) {
-            //       let tt = iter.data();
-            //       iter.next();
-            //       let next = null;
-            //       if (iter.okay())
-            //         next = iter.data();
-            //       paintPeriod(previous, tt, next);
-            //       previous = tt;
-            //     }
-            //     firstThreeDots(f);
-            //     lastThreeDots(f);
-            //     let diff = Semester.difference(firstSemScrolled, lastSem);
-            //     let k = beginx + (diff + 1) * widthOne + 2 * widthOne;
-            //     m_g.drawString(f.name, k, liney);
-            //   }
+            paintFaculty(f) {
+                this.setColor(this.colorNames);
+                let st = f.name;
+                let suffix = "";
+                if (this.sortMethod == CSCanvas.BYLENGTH) suffix = " " + f.numSemesters() / 2.0;
+                let noChars = ((this.beginx) / this.charWidth) - suffix.length - 4;
+                if (st.length > noChars)
+                    st = st.substring(0, noChars - 1);
+                this.drawString(this.ctxMain, st + suffix, 2, this.liney);
+                let iter = new LinkedListIterator(f.periods);
+                let previous = null;
+                while (iter.okay()) {
+                    let tt = iter.data();
+                    iter.next();
+                    let next = null;
+                    if (iter.okay())
+                        next = iter.data();
+                    //paintPeriod(previous, tt, next);
+                    previous = tt;
+                }
+                //firstThreeDots(f);
+                //lastThreeDots(f);
+                let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
+                let k = this.beginx + (diff + 1) * this.widthOne + 2 * this.widthOne;
+                this.drawString(this.ctxMain, f.name, k, this.liney);
+            }
 
             paintLegend() {
                 // Note: this text never actually showed up on the Java applet. Dunno why.
@@ -1240,7 +1247,7 @@
                 let d = new DynArray();
                 let t = new GriesTokenizer(strFacList);
                 while (t.hasMoreTokens()) {
-                    let name = t.nextWord().replace('=', ' ');
+                    let name = t.nextWord().replaceAll('=', ' ');
                     //console.log("parse: name=" + name);
 
                     let title = this.readTitle(t, name);
@@ -1338,8 +1345,10 @@
 
 
         function main() {
-
-            var canvasHdr = document.getElementById("canvasHdr");
+            // I've backed off from having 2 canvas elements, one for the header and 
+            // one for the main display. It's too difficult to keep them in sync. 
+            // However, I hanve't completely cleaned up the code yet.
+            var canvasHdr = document.getElementById("canvasMain");
             var ctxHdr = canvasHdr.getContext("2d");
 
             ctxHdr.font = "11pt sans-serif";
