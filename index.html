@@ -79,12 +79,76 @@
     </div>
     <div class="topfont">&nbsp;</div>
     <div class="topfont topinstructions">First:&nbsp; <select name="selfirst" id="selfirst">
-            <option value="1965">1965</option>
-            <option value="1966">1966</option>
+        <option value="1965">1965</option>
+        <option value="1966">1966</option>
+        <option value="1967">1967</option>
+        <option value="1968">1968</option>
+        <option value="1969">1969</option>
+        <option value="1970">1970</option>
+        <option value="1971">1971</option>
+        <option value="1972">1972</option>
+        <option value="1973">1973</option>
+        <option value="1974">1974</option>
+        <option value="1975">1975</option>
+        <option value="1976">1976</option>
+        <option value="1977">1977</option>
+        <option value="1978">1978</option>
+        <option value="1979">1979</option>
+        <option value="1980">1980</option>
+        <option value="1981">1981</option>
+        <option value="1982">1982</option>
+        <option value="1983">1983</option>
+        <option value="1984">1984</option>
+        <option value="1985">1985</option>
+        <option value="1986">1986</option>
+        <option value="1987">1987</option>
+        <option value="1988">1988</option>
+        <option value="1989">1989</option>
+        <option value="1990">1990</option>
+        <option value="1991">1991</option>
+        <option value="1992">1992</option>
+        <option value="1993">1993</option>
+        <option value="1994">1994</option>
+        <option value="1995">1995</option>
+        <option value="1996">1996</option>
+        <option value="1997">1997</option>
+        <option value="1998">1998</option>
         </select>
         &nbsp;&nbsp;Last:&nbsp; <select name="sellast" id="sellast">
             <option value="1965">1965</option>
             <option value="1966">1966</option>
+            <option value="1967">1967</option>
+            <option value="1968">1968</option>
+            <option value="1969">1969</option>
+            <option value="1970">1970</option>
+            <option value="1971">1971</option>
+            <option value="1972">1972</option>
+            <option value="1973">1973</option>
+            <option value="1974">1974</option>
+            <option value="1975">1975</option>
+            <option value="1976">1976</option>
+            <option value="1977">1977</option>
+            <option value="1978">1978</option>
+            <option value="1979">1979</option>
+            <option value="1980">1980</option>
+            <option value="1981">1981</option>
+            <option value="1982">1982</option>
+            <option value="1983">1983</option>
+            <option value="1984">1984</option>
+            <option value="1985">1985</option>
+            <option value="1986">1986</option>
+            <option value="1987">1987</option>
+            <option value="1988">1988</option>
+            <option value="1989">1989</option>
+            <option value="1990">1990</option>
+            <option value="1991">1991</option>
+            <option value="1992">1992</option>
+            <option value="1993">1993</option>
+            <option value="1994">1994</option>
+            <option value="1995">1995</option>
+            <option value="1996">1996</option>
+            <option value="1997">1997</option>
+            <option value="1998" selected="selected">1998</option>
         </select>
         &nbsp;&nbsp;Sort by:&nbsp;
         <select name="selsortby" id="selsortby">
@@ -94,7 +158,7 @@
             <option value="time in dept.">time in dept.</option>
             <option value="title">title</option>
         </select>
-        &nbsp;&nbsp;<button id="btnok">OK</button>
+        &nbsp;&nbsp;<button id="btnok" onclick="onOK();">OK</button>
         &nbsp;&nbsp;<button id="btnabout">About ...</button>
     </div>
     <!-- The canvases on which we will draw the faculty info. 
@@ -764,19 +828,16 @@
             }
 
             numSemesters() {
-                let num = 0;
-                let iter = this.periods[Symbol.iterator]();
-                let result;
-
-                while (!(result = iter.next()).done) {
-                    let tt = result.value;
-                    if (tt.status !== TitleTime.OTHERLEAVE) {
+                var num = 0;
+                var iter = new LinkedListIterator(this.periods);
+                while (iter.okay()) {
+                    var tt = iter.data();
+                    if (tt.status !== TitleTime.OTHERLEAVE)
                         num = num + Semester.difference(tt.firstSemester, tt.lastSemester) + 1;
-                    }
+                    iter.next();
                 }
-
                 return num;
-            }
+            };
 
             lastTitle() {
                 let ans = 0;
@@ -833,12 +894,16 @@
             // error = false;
             // static message1 = "";
             // static message2 = "";
+            static objCanvas;
 
             constructor(canvasHdr, canvasMain) {
                 this.ctxHdr = canvasHdr.getContext("2d");
                 this.ctxMain = canvasMain.getContext("2d");
                 this.mainHeight = canvasMain.height;
                 this.mainWidth = canvasMain.width;
+
+                this.ctxMain.font = "11pt sans-serif";
+
                 this.error = false;
                 this.message1 = "";
                 this.firstSem = null;
@@ -874,7 +939,12 @@
                 //     let diff = Semester.difference(firstSem, lastSem);
                 //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
                 this.maxTitleWidth = 20 * this.stringWidth("1")
+                // This is the color of the veritical bars. The original code used
+                // Color.brighter(), which isn't availalbe in JavaScript. I got this
+                // by running the original code and using a color picker.
                 this.colorVertical = "#d41405";
+
+                CSCanvas.objCanvas = this;
             }
 
             stringWidth(s) {
@@ -907,16 +977,20 @@
             //   }
 
             paintCanvas() {
-            //     m_g = g;
-            //     if (error) {
-            //       m_g.drawString("Sorry, there is an error in the input.", 2, liney);
-            //       m_g.drawString(message1, 2, liney + fontHeight);
-            //       m_g.drawString(message2, 2, liney + 2 * fontHeight);
-            //     }
+                //     m_g = g;
+                //     if (error) {
+                //       m_g.drawString("Sorry, there is an error in the input.", 2, liney);
+                //       m_g.drawString(message1, 2, liney + fontHeight);
+                //       m_g.drawString(message2, 2, liney + 2 * fontHeight);
+                //     }
+
+                this.ctxMain.fillStyle = rgb(250,250,210);  // LightYellow
+                this.ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
+
                 this.firstSemScrolled = this.firstSem;
-            //     let temp = drawing.scrollH.getValue();
-            //     for (let i = 0; i < temp; i = i + 1) firstSemScrolled = firstSemScrolled.next();
-            this.liney = this.fontHeight;
+                //     let temp = drawing.scrollH.getValue();
+                //     for (let i = 0; i < temp; i = i + 1) firstSemScrolled = firstSemScrolled.next();
+                this.liney = this.fontHeight;
                 this.paintLegend();
                 this.printHeaders(3 * this.liney);
                 this.beginy = 6 * this.fontHeight + 5;
@@ -1190,12 +1264,12 @@
 
             lastTitle(f) {
                 let iter = new LinkedListIterator(f.periods);
-                while (!isWithin(iter.data())) {
+                while (!this.isWithin(iter.data())) {
                     iter.next();
                 }
                 let p = iter.data();
                 iter.next();
-                while (iter.okay() && isWithin(iter.data())) {
+                while (iter.okay() && this.isWithin(iter.data())) {
                     p = iter.data();
                     iter.next();
                 }
@@ -1337,29 +1411,51 @@
                 this.setColor(saveColor);
             }
 
-            //   recalculate(sortChoice, fy, ly) {
-            //     firstSem = Semester.min(new Semester(9, fy), lastPossibleSem);
-            //     lastSem = Semester.min(new Semester(0, ly + 1), lastPossibleSem);
-            //     faculty = bigFaculty.copy();
-            //     let j = 0;
-            //     while (j != faculty.size()) {
-            //       let fac = faculty.element(j);
-            //       let out = Semester.less(fac.lastSemester(), firstSem) ||
-            //         Semester.less(lastSem, fac.firstSemester());
-            //       if (out) {
-            //         faculty.remove(j);
-            //       } else {
-            //         fac.lastTitle = lastTitle(fac);
-            //         j = j + 1;
-            //       }
-            //     }
-            //     faculty.sort(sortChoice);
-            //     sortMethod = sortChoice;
-            //   }
+              recalculate(sortChoice, fy, ly) {
+                this.firstSem = Semester.min(new Semester(9, fy), this.lastPossibleSem);
+                this.lastSem = Semester.min(new Semester(0, ly + 1), this.lastPossibleSem);
+                this.faculty = this.bigFaculty.copy();
+                let j = 0;
+                while (j != this.faculty.size()) {
+                  let fac = this.faculty.element(j);
+                  let out = Semester.less(fac.lastSemester(), this.firstSem) ||
+                    Semester.less(this.lastSem, fac.firstSemester());
+                  if (out) {
+                    this.faculty.remove(j);
+                  } else {
+                    fac.lastTitle = this.lastTitle(fac);
+                    j = j + 1;
+                  }
+                }
+                this.faculty.sort(sortChoice);
+                this.sortMethod = sortChoice;
+              }
+        }  // end of class CSCanvas
+
+
+        function onOK() {
+            let canvas = CSCanvas.objCanvas;
+
+            let fy = parseInt(document.getElementById("selfirst").value);
+            let ly = parseInt(document.getElementById("sellast").value);
+            if (fy > ly) {
+				ly= fy;
+				//lYear.select(fYear.getSelectedItem()                                                    		
+            }
+            let sortChoiceText = document.getElementById("selsortby").value;
+            let sortChoice = CSCanvas.BYNAME;
+            switch(sortChoiceText) {
+                case "name": sortChoice = CSCanvas.BYNAME; break;
+                case "first semester": sortChoice = CSCanvas.BYFIRSTSEMESTER; break;
+                case "last semester": sortChoice = CSCanvas.BYLASTSEMESTER; break;
+                case "time in dept.": sortChoice = CSCanvas.BYLENGTH; break;
+                case "title": sortChoice = CSCanvas.BYTITLE; break;
+                default: alert("Invalid sort choice: " + sortChoiceText); break;
+            }
+            
+            canvas.recalculate(sortChoice, fy, ly);
+            canvas.paintCanvas();
         }
-
-
-
 
         function main() {
             // I've backed off from having 2 canvas elements, one for the header and 
@@ -1368,34 +1464,12 @@
             var canvasHdr = document.getElementById("canvasMain");
             var ctxHdr = canvasHdr.getContext("2d");
 
-            ctxHdr.font = "11pt sans-serif";
-            ctxHdr.fillStyle = rgb(250,250,210); //"LightYellow";
-            ctxHdr.fillRect(0, 0, canvasHdr.width, canvasHdr.height);
+            // ctxHdr.font = "11pt sans-serif";
+            // ctxHdr.fillStyle = rgb(250,250,210); //"LightYellow";
+            // ctxHdr.fillRect(0, 0, canvasHdr.width, canvasHdr.height);
 
             var canvasMain = document.getElementById("canvasMain");
-            var ctxMain = canvasMain.getContext("2d");
-            ctxMain.fillStyle = rgb(250,250,210);//"LightYellow";
-            ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
-
-            ctxMain.font = "11pt sans-serif";
-            let lineHeight = computeFontHeight(ctxMain);
-
-            if (true) {
-
-                // ctxHdr.fillStyle = "Black";
-                // ctxHdr.font = "10pt sans-serif";
-                // let hdr1 = "zzCS FACULTY OVER THE YEARS!   Choose a range of years and a sort key and press OK.";
-                // let textWidth = ctxHdr.measureText(hdr1).width;
-                // //alert("textWidth=" + textWidth + " cHdr.width=" + cHdr.width)
-                // ctxHdr.fillText(hdr1, (cHdr.width - textWidth) / 2, 14);
-
-
-                for (var j = 1; j < 44; j++) {
-                    var txt = "CS FACULTY " + j + " OVER THE YEARS!   Choose a range of years and a sort key and press OK.";
-                    ctxMain.fillText(txt, 15, lineHeight * j);
-                }
-            }
-
+            
             var canvas = new CSCanvas(canvasHdr, canvasMain);
             canvas.paintCanvas();
 
