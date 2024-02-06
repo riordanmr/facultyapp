@@ -977,9 +977,20 @@
                 let st = f.name;
                 let suffix = "";
                 if (this.sortMethod == CSCanvas.BYLENGTH) suffix = " " + f.numSemesters() / 2.0;
-                let noChars = ((this.beginx) / this.charWidth) - suffix.length - 4;
-                if (st.length > noChars)
-                    st = st.substring(0, noChars - 1);
+                // The original code truncated the name to fit in the canvas, assuming
+                // a fixed-width font. However, in practice, the applet used a variable-width
+                // font, so the truncation was not accurate. 
+                // Literal translation of the original code:
+                //    let noChars = ((this.beginx) / this.charWidth) - suffix.length - 4;
+                //    if (st.length > noChars)
+                //        st = st.substring(0, noChars - 1);
+                // Thus, I'm going to compute the actual text length on the canvas and 
+                // truncate the name accordingly.
+
+                while(this.stringWidth(st + suffix) > (this.beginx - 2*this.charWidth)) {
+                    st = st.substring(0, st.length - 1);
+                }
+
                 this.drawString(this.ctxMain, st + suffix, 2, this.liney);
                 let iter = new LinkedListIterator(f.periods);
                 let previous = null;
