@@ -1092,8 +1092,8 @@
                     this.paintPeriod(previous, tt, next);
                     previous = tt;
                 }
-                //firstThreeDots(f);
-                //lastThreeDots(f);
+                this.firstThreeDots(f);
+                this.lastThreeDots(f);
                 let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
                 let k = this.beginx + (diff + 1) * this.widthOne + 2 * this.widthOne;
                 this.drawString(this.ctxMain, f.name, k, this.liney);
@@ -1160,26 +1160,26 @@
                 }
             }
 
-            //   static firstThreeDots(f) {
-            //     let first = f.periods.inspect();
-            //     m_g.setColor(first.titleColor());
-            //     if (isWithin(first) &&
-            //       Semester.lesseq(firstSem, f.firstSemester()))
-            //       return;
-            //     m_g.drawString(" ...", beginx - 16, liney - 4);
-            //   }
+            firstThreeDots(f) {
+                let first = f.periods.inspect();
+                this.setColor(first.titleColor());
+                if (this.isWithin(first) && Semester.lesseq(this.firstSem, f.firstSemester())) {
+                    return;
+                }
+                this.drawString(this.ctxMain, " ...", this.beginx - 18, this.liney - 4);
+            }
 
-            //   static lastThreeDots(f) {
-            //     let last = f.periods.inspectLast();
-            //     m_g.setColor(last.titleColor());
-            //     if (isWithin(last) &&
-            //       Semester.lesseq(f.lastSemester(), lastSem))
-            //       return;
-            //     let diff = Semester.difference(firstSemScrolled, lastSem);
-            //     let k = beginx + (diff + 1) * widthOne - 1;
-            //     m_g.setColor(last.titleColor());
-            //     m_g.drawString(" ...", k + 2, liney - 4);
-            //   }
+            lastThreeDots(f) {
+                let last = f.periods.inspectLast();
+                this.setColor(last.titleColor());
+                if (this.isWithin(last) && Semester.lesseq(f.lastSemester(), this.lastSem)) {
+                    return;
+                }
+                let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
+                let k = this.beginx + (diff + 1) * this.widthOne - 1;
+                this.setColor(last.titleColor());
+                this.drawString(this.ctxMain, " ...", k + 2, this.liney - 4);
+            }
 
             paintPeriod(previous, tt, next) {
                 if (!this.isWithin(tt))
