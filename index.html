@@ -13,8 +13,8 @@
 
     Most of the code here is a translation of the original Java code to JavaScript.
     Several automated tools were used to convert the Java code to JavaScript, including
-    codeconvert.ai, blackbox.ai, and Github Copilot. The resulting JavaScript code was 
-    then manually edited to fix errors and improve readability.
+    codeconvert.ai, blackbox.ai, www.stratacode.com/javaToJS/online.html, and Github Copilot. 
+    The resulting JavaScript code was then manually edited to fix errors and improve readability.
 
     Mark Riordan  January 2024
 --> 
@@ -910,6 +910,7 @@
                 this.lastSem = new Semester(0, 1999);
                 this.lastPossibleSem = new Semester(0, 1999);
                 this.colorNames = rgb(16, 4, 177);
+                this.colorBlack = rgb(0, 0, 0);
 
                 //     //super();
                 //     drawing = d;
@@ -955,10 +956,12 @@
                 this.ctxHdr.fillStyle = color;
                 this.ctxMain.fillStyle = color;
                 this.ctxMain.strokeStyle = color;
+                this.savedColor = color;
             }
 
             getColor() {
-                return this.ctxMain.fillStyle;
+                //return this.ctxMain.fillStyle;
+                return this.savedColor;
             }
 
             drawString(ctx, s, x, y) {
@@ -1022,8 +1025,8 @@
             //   }
 
             printHeaders(liney) {
-                //let saveColor = m_g.getColor();
-                //m_g.setColor(Color.black);
+                let saveColor = this.getColor();
+                this.setColor(this.colorBlack);
                 let s = this.firstSemScrolled;
                 let xF = this.beginx;
                 while (Semester.lesseq(s, this.lastSem)) {
@@ -1035,11 +1038,11 @@
                     s = s.next();
                 }
                 liney = liney + 3 * this.fontHeight;
-                //m_g.setColor(saveColor);
+                this.setColor(saveColor);
             }
 
             drawFaculty(faculty) {
-                //let saveColor = m_g.getColor();
+                let saveColor = this.getColor();
                 //let i = drawing.scrollV.getValue();
                 var i = 0;
                 let maxi = Math.trunc(i + (this.mainHeight - 5) / this.fontHeight + 1);
@@ -1049,14 +1052,21 @@
                     i = i + 1;
                     this.liney = this.liney + this.fontHeight;
                 }
-                //m_g.setColor(saveColor);
+                this.setColor(saveColor);
             }
 
             paintFaculty(f) {
                 this.setColor(this.colorNames);
                 let st = f.name;
                 let suffix = "";
-                if (this.sortMethod == CSCanvas.BYLENGTH) suffix = " " + f.numSemesters() / 2.0;
+                if (this.sortMethod == CSCanvas.BYLENGTH) {
+                    suffix = " " + f.numSemesters() / 2.0;
+                    // Append ".0" to the number if it's an integer
+                    if(!suffix.includes('.')) {
+                        suffix += ".0";
+                    }
+                }
+
                 // The original code truncated the name to fit in the canvas, assuming
                 // a fixed-width font. However, in practice, the applet used a variable-width
                 // font, so the truncation was not accurate. 
@@ -1066,7 +1076,6 @@
                 //        st = st.substring(0, noChars - 1);
                 // Thus, I'm going to compute the actual text length on the canvas and 
                 // truncate the name accordingly.
-
                 while(this.stringWidth(st + suffix) > (this.beginx - 2*this.charWidth)) {
                     st = st.substring(0, st.length - 1);
                 }
@@ -1469,7 +1478,7 @@
             // ctxHdr.fillRect(0, 0, canvasHdr.width, canvasHdr.height);
 
             var canvasMain = document.getElementById("canvasMain");
-            
+
             var canvas = new CSCanvas(canvasHdr, canvasMain);
             canvas.paintCanvas();
 
