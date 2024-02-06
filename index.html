@@ -883,6 +883,7 @@
             setColor(color) {
                 this.ctxHdr.fillStyle = color;
                 this.ctxMain.fillStyle = color;
+                this.ctxMain.strokeStyle = color;
             }
 
             drawString(ctx, s, x, y) {
@@ -1000,7 +1001,7 @@
                     let next = null;
                     if (iter.okay())
                         next = iter.data();
-                    //paintPeriod(previous, tt, next);
+                    this.paintPeriod(previous, tt, next);
                     previous = tt;
                 }
                 //firstThreeDots(f);
@@ -1092,32 +1093,32 @@
             //     m_g.drawString(" ...", k + 2, liney - 4);
             //   }
 
-            //   static paintPeriod(previous, tt, next) {
-            //     if (!isWithin(tt))
-            //       return;
-            //     let sTemp = Semester.max(firstSemScrolled, tt.firstSemester);
-            //     sTemp = Semester.min(lastSem, sTemp);
-            //     let j = beginx + Semester.difference(firstSemScrolled, sTemp) * widthOne;
-            //     j = j + widthOne / 2 - 2;
-            //     if ((previous != null) &&
-            //       isWithin(previous) &&
-            //       Semester.equals(previous.lastSemester.next(),
-            //         tt.firstSemester)) {
-            //       j = j - widthOne / 2 + 1;
-            //     }
-            //     sTemp = Semester.min(lastSem, tt.lastSemester);
-            //     sTemp = Semester.max(firstSemScrolled, sTemp);
-            //     let k = beginx + Semester.difference(firstSemScrolled, sTemp) * widthOne;
-            //     k = k + widthOne / 3;
-            //     if ((next != null) &&
-            //       isWithin(next) &&
-            //       Semester.equals(next.firstSemester,
-            //         tt.lastSemester.next())) {
-            //       k = k + widthOne / 2;
-            //     }
-            //     m_g.setColor(tt.titleColor());
-            //     drawStatusLines(m_g, j, k, tt.status, liney);
-            //   }
+            paintPeriod(previous, tt, next) {
+                if (!this.isWithin(tt))
+                    return;
+                let sTemp = Semester.max(this.firstSemScrolled, tt.firstSemester);
+                sTemp = Semester.min(this.lastSem, sTemp);
+                let j = this.beginx + Semester.difference(this.firstSemScrolled, sTemp) * this.widthOne;
+                j = j + this.widthOne / 2 - 2;
+                if ((previous != null) &&
+                    this.isWithin(previous) &&
+                    Semester.equals(previous.lastSemester.next(),
+                        tt.firstSemester)) {
+                    j = j - this.widthOne / 2 + 1;
+                }
+                sTemp = Semester.min(this.lastSem, tt.lastSemester);
+                sTemp = Semester.max(this.firstSemScrolled, sTemp);
+                let k = this.beginx + Semester.difference(this.firstSemScrolled, sTemp) * this.widthOne;
+                k = k + this.widthOne / 3;
+                if ((next != null) &&
+                    this.isWithin(next) &&
+                    Semester.equals(next.firstSemester,
+                        tt.lastSemester.next())) {
+                    k = k + this.widthOne / 2;
+                }
+                this.setColor(tt.titleColor());
+                this.drawStatusLines(this.ctxMain, j, k, tt.status, this.liney);
+            }
 
             isWithin(tt) {
                 if (Semester.less(tt.lastSemester, this.firstSem))
