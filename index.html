@@ -874,6 +874,7 @@
                 //     let diff = Semester.difference(firstSem, lastSem);
                 //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
                 this.maxTitleWidth = 20 * this.stringWidth("1")
+                this.colorVertical = "#d41405";
             }
 
             stringWidth(s) {
@@ -884,6 +885,10 @@
                 this.ctxHdr.fillStyle = color;
                 this.ctxMain.fillStyle = color;
                 this.ctxMain.strokeStyle = color;
+            }
+
+            getColor() {
+                return this.ctxMain.fillStyle;
             }
 
             drawString(ctx, s, x, y) {
@@ -917,7 +922,7 @@
                 this.beginy = 6 * this.fontHeight + 5;
                 this.liney = this.beginy;
                 this.drawFaculty(this.faculty);
-            //     drawVerticals();
+                this.drawVerticals();
             }
 
             //   update(g) {
@@ -1316,21 +1321,21 @@
             //     return t.toString();
             // }
 
-            //   static drawVerticals() {
-            //     let saveColor = m_g.getColor();
-            //     m_g.setColor(saveColor.brighter());
-            //     let topy = startVerticals;
-            //     let i = 0;
-            //     let diff = Semester.difference(firstSemScrolled, lastSem);
-            //     while (i <= diff) {
-            //       let k = beginx + i * widthOne - 1;
-            //       m_g.drawLine(k, topy, k, liney - fontHeight);
-            //       i = i + 10;
-            //     }
-            //     let k = beginx + (diff + 1) * widthOne - 1;
-            //     m_g.drawLine(k, topy, k, liney - fontHeight);
-            //     m_g.setColor(saveColor);
-            //   }
+            drawVerticals() {
+                let saveColor = this.getColor();
+                this.setColor(this.colorVertical);
+                let topy = this.startVerticals;
+                let i = 0;
+                let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
+                while (i <= diff) {
+                    let k = this.beginx + i * this.widthOne - 1;
+                    this.drawLine(this.ctxMain, k, topy, k, this.liney - this.fontHeight);
+                    i = i + 10;
+                }
+                let k = this.beginx + (diff + 1) * this.widthOne - 1;
+                this.drawLine(this.ctxMain, k, topy, k, this.liney - this.fontHeight);
+                this.setColor(saveColor);
+            }
 
             //   recalculate(sortChoice, fy, ly) {
             //     firstSem = Semester.min(new Semester(9, fy), lastPossibleSem);
