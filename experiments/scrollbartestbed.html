@@ -7,6 +7,7 @@
 /* @import "compass/css3"; */
 
 h1 {
+  font-family: sans-serif;
   font-size: 20px;
   margin: 5px 5px 10px;
 }
@@ -16,94 +17,89 @@ input[type="number"], li {
   margin-bottom: 10px;
 }
 
-form {
-  margin: 5px;
+#canvasMain {
+  padding: 0px;
+  margin: 0px;
 }
 
-canvas {
-  padding: 20px;
+#scrollbarvert {
+  padding: 0px;
+  margin: 0px;
 }
+
+.tablenopadding {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+.cellnopadding {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
 </style>
 </head>
 <body>
 <h1>Canvas Scrollbar Test</h1>
-<form>
-  <ul>
-    <li>
-      <input type="radio" name="direction" id="vertical" value="vertical" checked />
-      <label for="vertical">Vertical</label>
-      <input type="radio" name="direction" id="horizontal" value="horizontal" />
-      <label for="horizontal">Horizontal</label>
-    </li>
 
-    <li>
-      <label for="width">Width</label>
-      <input type="number" id="width" value="15" />
-    </li>
-    <li>
-      <label for="height">Height</label>
-      <input id="height" type="number" value="200" />
-    </li>
-    <li>
-      <label for="scrollbar">Scrollbar Size</label>
-      <input id="scrollbar" type="number" value="15" />
-    </li>
-    <li>
-      <label for="max">Max Value</label>
-      <input id="max" type="number" value="100" />
-    </li>
-    <li>
-      <label for="val">Value</label>
-      <input id="val" type="number" value="20" />
-    </li>
-    <li>
-      <input id="submit" type="submit" />
-    </li>
-  </ul>
-</form>
-
-<canvas id="canvas" width="50" height="300"><canvas>
+<table class="tablenopadding">
+  <tr>
+    <td class="cellnopadding"><canvas id="canvasMain" width="300" height="300"></canvas></td>
+    <td class="cellnopadding"><canvas id="scrollbarvert" width="15" height="300"></canvas></td>
+  </tr>
+</table>
 
 <script>
-var canvas = document.getElementById('canvas'),
-    ctx = canvas.getContext('2d');
+
+  // Convert red, green, blue integers to an HTML color code.
+  function rgb(r, g, b) {
+    const toHex = n => n.toString(16).padStart(2, '0');
+    return '#' + toHex(r) + toHex(g) + toHex(b);
+  }
+
+var canvasScrollbar = document.getElementById('scrollbarvert'),
+    ctxScrollbar = canvasScrollbar.getContext('2d');
+var canvasMain = document.getElementById('canvasMain'),
+    ctxMain = canvasMain.getContext('2d');
                              
 function drawScrollbar () {
-  var width = parseInt(document.getElementById('width').value),
-    height = parseInt(document.getElementById('height').value),
-    scrollbarSize = parseInt(document.getElementById('scrollbar').value),
-    max = parseInt(document.getElementById('max').value),
-    val = Math.min(Math.max(parseInt(parseInt(document.getElementById('val').value)), 0), max),
-    isVertical = document.getElementById('vertical').checked;
+  var rectScrollbar = canvasScrollbar.getBoundingClientRect();
+  var width = canvasScrollbar.width,
+    height = canvasScrollbar.height,
+    scrollbarSize = width,
+    max = 25,
+    val = 11,
+    isVertical = true;
 
   direction = isVertical ? 'vertical' : 'horizontal';  
+
+  ctxMain.fillStyle = rgb(250,250,210);  // LightYellow
+  ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
   
   // Draw the scrollbar itself. 
-  ctx.fillStyle = '#d9d9d9';  // Used color picker to get this color from original applet.
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillRect(0, 0, width, height);
+  ctxScrollbar.fillStyle = '#d9d9d9';  // Used color picker to get this color from original applet.
+  //ctxScrollbar.clearRect(0, 0, canvasScrollbar.width, canvasScrollbar.height);
+  ctxScrollbar.fillRect(0, 0, width, height);
   //console.log(width);
 
   // Draw the scrollbar slider.
-  ctx.fillStyle = '#aeaeae';  // Used color picker to get this color from original applet.
+  ctxScrollbar.fillStyle = '#aeaeae';  // Used color picker to get this color from original applet.
   if (direction === 'vertical') {
     var scrollbarPosition = ((height - scrollbarSize) / max) * val;
-    ctx.fillRect(0, scrollbarPosition, width, scrollbarSize);
+    ctxScrollbar.fillRect(0, scrollbarPosition, width, scrollbarSize);
   } else {
     var scrollbarPosition = ((width - scrollbarSize) / max) * val;
-    ctx.fillRect(scrollbarPosition, 0, scrollbarSize, height);
+    ctxScrollbar.fillRect(scrollbarPosition, 0, scrollbarSize, height);
   }
 }
 
 drawScrollbar();
 
-document.getElementById('submit').addEventListener('click', function (e) {
-  e.preventDefault();
-  drawScrollbar();
-});
+document.getElementById("scrollbarvert").addEventListener("click", function(e) {
+  var rect = e.target.getBoundingClientRect();
+  var x = e.clientX - rect.left; //x position within the element.
+  var y = e.clientY - rect.top;  //y position within the element.
 
-document.getElementById("canvas").addEventListener("click", function(e) {
-  console.log("canvas here with event " + e + " with clientx " + e.clientX + " and clienty " + e.clientY);
+  console.log("canvas here with event " + e + " with x " + x + " and y " + y);
 });
 </script>
 </body>
