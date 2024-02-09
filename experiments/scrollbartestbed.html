@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <!-- Testbed web page to experiment with manually-drawn scrollbars. 
   Mark Riordan  06-FEB-2024 -->
@@ -104,7 +105,7 @@ h1 {
     calculateNewLine(y) {
       if (y >= this.curSliderPos && y <= (this.curSliderPos + this.scrollbarSize)) {
         // User clicked on the slider.  No change in line number.
-        console.log("calculateNewLine: user clicked on the slider");
+        //console.log("calculateNewLine: user clicked on the slider");
         return false;
       } else {
         if (y < this.curSliderPos) {
@@ -112,13 +113,13 @@ h1 {
           if (this.curLine < 0) {
             this.curLine = 0;
           }
-          console.log("calculateNewLine: user clicked above the slider y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll+ " curSliderPos=" + this.curSliderPos);
+          //console.log("calculateNewLine: user clicked above the slider y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll+ " curSliderPos=" + this.curSliderPos);
         } else {
           this.curLine += this.linesPerPage - 1;
           if (this.curLine >= this.maxLines) {
             this.curLine = this.maxLines-1;
           }
-          console.log("calculateNewLine: user clicked below the slider. y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll + " curSliderPos=" + this.curSliderPos);
+          //console.log("calculateNewLine: user clicked below the slider. y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll + " curSliderPos=" + this.curSliderPos);
         }
         return true;
       }
@@ -135,6 +136,25 @@ h1 {
         drawMain(sbVert.curLine);
       }
       sbVert.prevY = y;
+    }
+
+    handleWheelScroll(e) {
+      var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+      if (delta > 0) {
+        // Scroll up, if possible.
+        this.curLine--;
+        if (this.curLine < 0) {
+          this.curLine = 0;
+        }
+      } else {
+        // Scroll down, if possible.
+        this.curLine++
+        if (this.curLine >= this.maxLines) {
+          this.curLine = this.maxLines-1;
+        }
+      }
+      sbVert.draw();
+      drawMain(sbVert.curLine);
     }
   }
 
@@ -171,6 +191,10 @@ h1 {
 
     canvasScrollbar.addEventListener("click", function (e) {
       sbVert.handleClick(e);
+    });
+
+    canvasScrollbar.addEventListener("wheel", function (e) {
+      sbVert.handleWheelScroll(e);
     });
 
     drawMain(0);
