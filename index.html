@@ -27,15 +27,37 @@
         .topfont {
             font-family: sans-serif;
         }
-
+    
         .topinstructions {
             text-align: center;
             width: 800px;
+        }
+    
+        #canvasMain {
+            padding: 0px;
+            margin: 0px;
+        }
+    
+        #scrollbarvert {
+            padding: 0px;
+            margin: 0px;
+        }
+    
+        .tablenopadding {
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+    
+        .cellnopadding {
+            padding: 0 !important;
+            margin: 0 !important;
         }
     </style>
     <!-- This is the equivalent of the embedded resource faclist.txt.
     -->
     <script type="text/javascript" src="faclist.js"></script>
+
+    <script type="text/javascript" src="CSScrollbar.js"></script>
 
     <script>
         // Return a promise that resolves to the text of the file.
@@ -161,24 +183,14 @@
         &nbsp;&nbsp;<button id="btnok" onclick="onOK();">OK</button>
         &nbsp;&nbsp;<button id="btnabout">About ...</button>
     </div>
-    <!-- The canvases on which we will draw the faculty info. 
-        I use two canvases, one for the header and one for the main display.
-        Each is wrapped in a div.
-        I have not found a decent way to position one div directly below another.
-        At one point I wrapped the two divs in a third div, and used the third div's
-        background color to mask the thin gap between the two divs -- but that caused
-        width problems, so I abandoned that approach.
-    -->
-    <!-- <div id="divHdr"><canvas id="canvasHdr" width="800" height="88" style="border: 0px; margin: 0px; clear: both">
-        </canvas></div>
-    <div id="divMain" style="max-height: 400px; max-width: 800px; overflow: scroll; ">
-        <canvas id="canvasMain" width="800" height="900" overflow: scroll style="clear:both; border: 0px; margin: 0px">
-            Your browser does not support the HTML canvas tag.</canvas>
-    </div> -->
-    <dev id="divMain">
-        <canvas id="canvasMain" width="800" height="550" overflow: scroll style="clear:both; border: 0px; margin: 0px">
-            Your browser does not support the HTML canvas tag.</canvas>
-    </dev>
+
+    <table class="tablenopadding">
+        <tr>
+          <td class="cellnopadding"><canvas id="canvasMain" width="800" height="550"></canvas></td>
+          <td class="cellnopadding"><canvas id="scrollbarVert" width="15" height="550"></canvas></td>
+        </tr>
+      </table>
+      
     <script>
         // Given a context, compute the number of pixels between consecutive lines of text,
         // including any necessary leading.
@@ -856,10 +868,6 @@
         }
 
 
-
-
-
-
         class CSCanvas /*extends Canvas*/ {
             // static drawing;
             // static length;
@@ -896,11 +904,13 @@
             // static message2 = "";
             static objCanvas;
 
-            constructor(canvasHdr, canvasMain) {
-                this.ctxHdr = canvasHdr.getContext("2d");
+            constructor(canvasMain, canvasScrollVert) {
+                this.canvasMain = canvasMain;
                 this.ctxMain = canvasMain.getContext("2d");
                 this.mainHeight = canvasMain.height;
                 this.mainWidth = canvasMain.width;
+
+                this.canvasScrollVert = canvasScrollVert;
 
                 this.ctxMain.font = "11pt sans-serif";
 
@@ -946,6 +956,16 @@
                 this.colorVertical = "#d41405";
 
                 CSCanvas.objCanvas = this;
+
+                var maxLines = this.faculty.size();
+                var linesPerPage = Math.trunc((this.mainHeight - 5) / this.fontHeight + 1);
+                // Account for the 5 headers lines at the top that don't scroll.
+                linesPerPage -= 5;
+                this.scrollbarVert = new CSScrollbar(this.canvasScrollVert, maxLines,
+                    linesPerPage, true, function(curLine) {
+                        CSCanvas.objCanvas.paintCanvas();
+                    });
+                this.scrollbarVert.draw();
             }
 
             stringWidth(s) {
@@ -953,7 +973,6 @@
             }
 
             setColor(color) {
-                this.ctxHdr.fillStyle = color;
                 this.ctxMain.fillStyle = color;
                 this.ctxMain.strokeStyle = color;
                 this.savedColor = color;
@@ -1030,10 +1049,10 @@
                 let s = this.firstSemScrolled;
                 let xF = this.beginx;
                 while (Semester.lesseq(s, this.lastSem)) {
-                    this.drawString(this.ctxHdr,s.semester(), xF + 1, liney);
+                    this.drawString(this.ctxMain,s.semester(), xF + 1, liney);
                     let j = s.year() % 100;
-                    this.drawString(this.ctxHdr,((j - j % 10) / 10).toString(), xF, liney + this.fontHeight);
-                    this.drawString(this.ctxHdr,(j % 10).toString(), xF, liney + 2 * this.fontHeight);
+                    this.drawString(this.ctxMain,((j - j % 10) / 10).toString(), xF, liney + this.fontHeight);
+                    this.drawString(this.ctxMain,(j % 10).toString(), xF, liney + 2 * this.fontHeight);
                     xF = xF + this.widthOne;
                     s = s.next();
                 }
@@ -1044,8 +1063,8 @@
             drawFaculty(faculty) {
                 let saveColor = this.getColor();
                 //let i = drawing.scrollV.getValue();
-                var i = 0;
-                let maxi = Math.trunc(i + (this.mainHeight - 5) / this.fontHeight + 1);
+                var i = this.scrollbarVert.curLine;
+                let maxi = Math.trunc(i + (this.mainHeight - 5) / this.fontHeight + 1 - 5);
                 if (maxi > faculty.size()) maxi = faculty.size();
                 while (i < maxi) {
                     this.paintFaculty(faculty.element(i));
@@ -1101,11 +1120,11 @@
 
             paintLegend() {
                 // Note: this text never actually showed up on the Java applet. Dunno why.
-                this.ctxHdr.fillStyle = rgb(0, 0, 0);
+                this.ctxMain.fillStyle = rgb(0, 0, 0);
                 let cm = 2;
                 let liney = this.fontHeight;
                 let msg = "No. of faculty: " + this.faculty.size();
-                this.drawString(this.ctxHdr, msg, cm, this.fontHeight * 3);
+                this.drawString(this.ctxMain, msg, cm, this.fontHeight * 3);
                 let noOnLine = 0;
                 let tt = 1;
                 while (tt <= TitleTime.numTitles) {
@@ -1114,7 +1133,7 @@
                     let title = TitleTime.makeTitle(tt);
                     let num = this.faculty.numTitle(tt);
                     this.setColor(TitleTime.titleColor(tt));
-                    this.drawString(this.ctxHdr, title + " (" + num + ")  ", cm, liney);
+                    this.drawString(this.ctxMain, title + " (" + num + ")  ", cm, liney);
                     cm = cm + this.maxTitleWidth;
                     noOnLine = noOnLine + 1;
                     if (noOnLine == 4) {
@@ -1128,22 +1147,22 @@
                 if (this.someoneHasStatus(TitleTime.SABBATIC)) {
                   liney = 4 * this.fontHeight;
                   cm = 2;
-                  this.drawString(this.ctxHdr, "sabbatic: ", cm, liney);
+                  this.drawString(this.ctxMain, "sabbatic: ", cm, liney);
                   cm = cm + this.stringWidth("sabbatic: ");
                   this.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
-                  this.drawStatusLines(this.ctxHdr, cm, cm + 10, TitleTime.NOLEAVE, liney);
-                  this.drawStatusLines(this.ctxHdr, cm + 11, cm + 28, TitleTime.SABBATIC, liney);
-                  this.drawStatusLines(this.ctxHdr, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
+                  this.drawStatusLines(this.ctxMain, cm, cm + 10, TitleTime.NOLEAVE, liney);
+                  this.drawStatusLines(this.ctxMain, cm + 11, cm + 28, TitleTime.SABBATIC, liney);
+                  this.drawStatusLines(this.ctxMain, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
                 }
                 if (this.someoneHasStatus(TitleTime.OTHERLEAVE)) {
                     liney = 5 * this.fontHeight;
                     cm = 2;
-                    this.drawString(this.ctxHdr, "leave: ", cm, liney);
+                    this.drawString(this.ctxMain, "leave: ", cm, liney);
                     cm = cm + this.stringWidth("sabbatic: ");
                     this.setColor(TitleTime.titleColor(TitleTime.FULLPROF));
-                    this.drawStatusLines(this.ctxHdr, cm, cm + 10, TitleTime.NOLEAVE, liney);
-                    this.drawStatusLines(this.ctxHdr, cm + 11, cm + 28, TitleTime.OTHERLEAVE, liney);
-                    this.drawStatusLines(this.ctxHdr, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
+                    this.drawStatusLines(this.ctxMain, cm, cm + 10, TitleTime.NOLEAVE, liney);
+                    this.drawStatusLines(this.ctxMain, cm + 11, cm + 28, TitleTime.OTHERLEAVE, liney);
+                    this.drawStatusLines(this.ctxMain, cm + 29, cm + 38, TitleTime.NOLEAVE, liney);
                 }
             }
             
@@ -1467,19 +1486,9 @@
         }
 
         function main() {
-            // I've backed off from having 2 canvas elements, one for the header and 
-            // one for the main display. It's too difficult to keep them in sync. 
-            // However, I hanve't completely cleaned up the code yet.
-            var canvasHdr = document.getElementById("canvasMain");
-            var ctxHdr = canvasHdr.getContext("2d");
-
-            // ctxHdr.font = "11pt sans-serif";
-            // ctxHdr.fillStyle = rgb(250,250,210); //"LightYellow";
-            // ctxHdr.fillRect(0, 0, canvasHdr.width, canvasHdr.height);
-
             var canvasMain = document.getElementById("canvasMain");
-
-            var canvas = new CSCanvas(canvasHdr, canvasMain);
+            var canvasScrollVert = document.getElementById("scrollbarVert");
+            var canvas = new CSCanvas(canvasMain, canvasScrollVert);
             canvas.paintCanvas();
 
         }

@@ -1,4 +1,4 @@
-// A class to create a scrollbar for a canvas.  
+// A class to create a scrollbar for an HTML canvas.  
 // The caller provides a canvas representing the scrollbar, and a callback
 // function to call when the scrollbar is scrolled.  
 //
