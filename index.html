@@ -194,6 +194,13 @@
       </table>
       
     <script>
+        // Constants to identify sort keys.
+        const BYNAME = 0;
+        const BYFIRSTSEMESTER = 1;
+        const BYLASTSEMESTER = 2;
+        const BYLENGTH = 3;
+        const BYTITLE = 4;
+
         // Given a context, compute the number of pixels between consecutive lines of text,
         // including any necessary leading.
         // Thanks to https://stackoverflow.com/questions/1134586
@@ -481,6 +488,10 @@
 
         // Converted from DynArray.java by codeconvert.ai
         class DynArray {
+            static sort0 = BYNAME;
+            static sort1 = BYNAME;
+            static sort2 = BYNAME;
+
             constructor() {
                 this.b = new Array(10);
                 this.sz = 0;
@@ -536,9 +547,9 @@
             }
 
             sort(sortChoice) {
-                this.sort2 = this.sort1;
-                this.sort1 = this.sort0;
-                this.sort0 = sortChoice;
+                DynArray.sort2 = DynArray.sort1;
+                DynArray.sort1 = DynArray.sort0;
+                DynArray.sort0 = sortChoice;
                 this.quickSort();
             }
 
@@ -613,15 +624,15 @@
 
             less(i, j, s) {
                 switch (s) {
-                    case CSCanvas.BYNAME:
+                    case BYNAME:
                         return this.b[i].name.localeCompare(this.b[j].name) < 0;
-                    case CSCanvas.BYTITLE:
+                    case BYTITLE:
                         return this.b[j].lastTitle < this.b[i].lastTitle;
-                    case CSCanvas.BYFIRSTSEMESTER:
+                    case BYFIRSTSEMESTER:
                         return DynArray.cameBefore(this.b[i], this.b[j]);
-                    case CSCanvas.BYLASTSEMESTER:
+                    case BYLASTSEMESTER:
                         return DynArray.leftBefore(this.b[j], this.b[i]);
-                    case CSCanvas.BYLENGTH:
+                    case BYLENGTH:
                         return this.b[j].numSemesters() < this.b[i].numSemesters();
                     default:
                         return true;
@@ -629,13 +640,13 @@
             }
 
             lessTest(i, j) {
-                if (this.less(i, j, this.sort0)) return true;
-                if (this.less(j, i, this.sort0)) return false;
+                if (this.less(i, j, DynArray.sort0)) return true;
+                if (this.less(j, i, DynArray.sort0)) return false;
 
-                if (this.less(i, j, this.sort1)) return true;
-                if (this.less(j, i, this.sort1)) return false;
+                if (this.less(i, j, DynArray.sort1)) return true;
+                if (this.less(j, i, DynArray.sort1)) return false;
 
-                return this.less(i, j, this.sort2);
+                return this.less(i, j, DynArray.sort2);
             }
         }
 
@@ -888,11 +899,7 @@
             // static firstSemScrolled;
             // backBuffer;
             // backG;
-            static BYNAME = 0;
-            static BYFIRSTSEMESTER = 1;
-            static BYLASTSEMESTER = 2;
-            static BYLENGTH = 3;
-            static BYTITLE = 4;
+
             // static sortMethod = CSCanvas.BYNAME;
             // static beginx;
             // static beginy;
@@ -934,10 +941,10 @@
                 this.bigFaculty = this.parse();
                 if (this.bigFaculty != null) {
                     this.faculty = this.bigFaculty.copy();
-                    this.faculty.sort(CSCanvas.BYFIRSTSEMESTER);
+                    this.faculty.sort(BYFIRSTSEMESTER);
                     this.firstPossibleSem = this.faculty.element(0).firstSemester();
                     this.firstSem = this.firstPossibleSem;
-                    this.faculty.sort(CSCanvas.BYNAME);
+                    this.faculty.sort(BYNAME);
                 }
                 //     font = new Font("Monospaced", Font.PLAIN, 10);
                 //     fontM = getFontMetrics(font);
@@ -1065,7 +1072,7 @@
                 this.setColor(this.colorNames);
                 let st = f.name;
                 let suffix = "";
-                if (this.sortMethod == CSCanvas.BYLENGTH) {
+                if (this.sortMethod == BYLENGTH) {
                     suffix = " " + f.numSemesters() / 2.0;
                     // Append ".0" to the number if it's an integer
                     if(!suffix.includes('.')) {
@@ -1466,13 +1473,13 @@
 				//lYear.select(fYear.getSelectedItem()                                                    		
             }
             let sortChoiceText = document.getElementById("selsortby").value;
-            let sortChoice = CSCanvas.BYNAME;
+            let sortChoice = BYNAME;
             switch(sortChoiceText) {
-                case "name": sortChoice = CSCanvas.BYNAME; break;
-                case "first semester": sortChoice = CSCanvas.BYFIRSTSEMESTER; break;
-                case "last semester": sortChoice = CSCanvas.BYLASTSEMESTER; break;
-                case "time in dept.": sortChoice = CSCanvas.BYLENGTH; break;
-                case "title": sortChoice = CSCanvas.BYTITLE; break;
+                case "name": sortChoice = BYNAME; break;
+                case "first semester": sortChoice = BYFIRSTSEMESTER; break;
+                case "last semester": sortChoice = BYLASTSEMESTER; break;
+                case "time in dept.": sortChoice = BYLENGTH; break;
+                case "title": sortChoice = BYTITLE; break;
                 default: alert("Invalid sort choice: " + sortChoiceText); break;
             }
             
