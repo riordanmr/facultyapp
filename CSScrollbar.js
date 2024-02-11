@@ -26,6 +26,11 @@ class CSScrollbar {
       canvas.addEventListener("wheel", this.handleWheelScroll);
     }
 
+    setMaxLines(maxLines) {
+        this.maxLines = maxLines;
+        this.draw();
+    }
+
     draw () {
       // Draw the scrollbar itself. 
       this.ctx.fillStyle = '#d9d9d9';  // Used color picker to get this color from original applet.

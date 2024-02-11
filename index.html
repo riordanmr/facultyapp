@@ -26,11 +26,13 @@
     <style>
         .topfont {
             font-family: sans-serif;
+            font-size: 10pt;
         }
     
         .topinstructions {
             text-align: center;
             width: 800px;
+            margin-bottom: 4px;
         }
     
         #canvasMain {
@@ -186,8 +188,8 @@
 
     <table class="tablenopadding">
         <tr>
-          <td class="cellnopadding"><canvas id="canvasMain" width="800" height="550"></canvas></td>
-          <td class="cellnopadding"><canvas id="scrollbarVert" width="15" height="550"></canvas></td>
+          <td class="cellnopadding"><canvas id="canvasMain" width="800" height="460"></canvas></td>
+          <td class="cellnopadding"><canvas id="scrollbarVert" width="15" height="460"></canvas></td>
         </tr>
       </table>
       
@@ -199,7 +201,7 @@
             let metrics = ctx.measureText("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ");
             let fontHeight = metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent;
             let actualHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-            return 1.2 * actualHeight;
+            return 1.07 * actualHeight;
         }
 
         // Convert red, green, blue integers to an HTML color code.
@@ -912,7 +914,7 @@
 
                 this.canvasScrollVert = canvasScrollVert;
 
-                this.ctxMain.font = "11pt sans-serif";
+                this.ctxMain.font = "10pt sans-serif";
 
                 this.error = false;
                 this.message1 = "";
@@ -958,8 +960,11 @@
                 CSCanvas.objCanvas = this;
 
                 var maxLines = this.faculty.size();
-                var linesPerPage = Math.trunc((this.mainHeight - 5) / this.fontHeight + 1);
-                // Account for the 5 headers lines at the top that don't scroll.
+                // Set the number of lines per scroll of the page to one less than
+                // the number of lines that fit in the canvas, so that the last
+                // line on one page will be the first line on the next page.
+                var linesPerPage = Math.trunc((this.mainHeight - 5) / this.fontHeight);
+                // Account for the 5 header lines at the top that don't scroll.
                 linesPerPage -= 5;
                 this.scrollbarVert = new CSScrollbar(this.canvasScrollVert, maxLines,
                     linesPerPage, true, function(curLine) {
@@ -979,7 +984,6 @@
             }
 
             getColor() {
-                //return this.ctxMain.fillStyle;
                 return this.savedColor;
             }
 
@@ -994,10 +998,7 @@
                 ctx.stroke();
             }
 
-            //   paint(g) {
-            //     update(g);
-            //   }
-
+            // Draw the entire canvas, including headers and faculty members.
             paintCanvas() {
                 //     m_g = g;
                 if (this.error) {
@@ -1017,32 +1018,12 @@
                 this.printHeaders(3 * this.liney);
                 this.beginy = 6 * this.fontHeight + 5;
                 this.liney = this.beginy;
+                this.scrollbarVert.setMaxLines(this.faculty.size());
                 this.drawFaculty(this.faculty);
                 this.drawVerticals();
             }
 
-            //   update(g) {
-            //     let w = getBounds().width;
-            //     let h = getBounds().height;
-            //     if (backBuffer == null ||
-            //       backBuffer.getWidth(null) != w ||
-            //       backBuffer.getHeight(null) != h) {
-            //       backBuffer = createImage(w, h);
-            //       if (backBuffer != null) {
-            //         if (backG != null) {
-            //           backG.dispose();
-            //         }
-            //         backG = backBuffer.getGraphics();
-            //       }
-            //     }
-            //     if (backBuffer != null) {
-            //       backG.setColor(new Color(250, 250, 210));
-            //       backG.fillRect(0, 0, w, h);
-            //       paintCanvas(backG);
-            //       g.drawImage(backBuffer, 0, 0, null);
-            //     }
-            //   }
-
+            // Display the headers that indicate the semester and year for each column.
             printHeaders(liney) {
                 let saveColor = this.getColor();
                 this.setColor(this.colorBlack);
@@ -1060,6 +1041,7 @@
                 this.setColor(saveColor);
             }
 
+            // Display the current page of faculty members. Headers are not included.
             drawFaculty(faculty) {
                 let saveColor = this.getColor();
                 //let i = drawing.scrollV.getValue();
@@ -1074,6 +1056,7 @@
                 this.setColor(saveColor);
             }
 
+            // Paint the periods for a single faculty member.
             paintFaculty(f) {
                 this.setColor(this.colorNames);
                 let st = f.name;
@@ -1118,13 +1101,19 @@
                 this.drawString(this.ctxMain, f.name, k, this.liney);
             }
 
+            // Display the total number of faculty members and for the current filter,
+            // the number of faculty members with each title. Also display the
+            // legend for the types of leave, if there are any faculty members 
+            // in the filter with that type of leave.
             paintLegend() {
-                // Note: this text never actually showed up on the Java applet. Dunno why.
+                // Note: this "No. of faculty:" text never actually showed up on the Java applet. 
+                // Dunno why.
                 this.ctxMain.fillStyle = rgb(0, 0, 0);
                 let cm = 2;
                 let liney = this.fontHeight;
                 let msg = "No. of faculty: " + this.faculty.size();
                 this.drawString(this.ctxMain, msg, cm, this.fontHeight * 3);
+
                 let noOnLine = 0;
                 let tt = 1;
                 while (tt <= TitleTime.numTitles) {
@@ -1166,6 +1155,8 @@
                 }
             }
             
+            // Draw lines in horizontal position h1..h2 for leave status st,
+            // for the current faculty member.
             drawStatusLines(ctx, h1, h2, st, liney) {
                 if (st == TitleTime.SABBATIC) {
                 } else {
