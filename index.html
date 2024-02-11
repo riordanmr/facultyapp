@@ -1202,29 +1202,42 @@
                 this.drawString(this.ctxMain, " ...", k + 2, this.liney - 4);
             }
 
+            // Paint a single period of service for a faculty member.  Use a horizontal line
+            // that is aligned with the beginning and ending semesters of the period.
             paintPeriod(previous, tt, next) {
                 if (!this.isWithin(tt))
                     return;
+               	// Calculate position j of beginning of line for time period tt
                 let sTemp = Semester.max(this.firstSemScrolled, tt.firstSemester);
                 sTemp = Semester.min(this.lastSem, sTemp);
                 let j = this.beginx + Semester.difference(this.firstSemScrolled, sTemp) * this.widthOne;
                 j = j + this.widthOne / 2 - 2;
+
+                // if the line for the previous period should be contiguous with
+                // this one, subtract a bit from j so that the lines will abut
                 if ((previous != null) &&
                     this.isWithin(previous) &&
                     Semester.equals(previous.lastSemester.next(),
                         tt.firstSemester)) {
                     j = j - this.widthOne / 2 + 1;
                 }
+
+                // Calculate position k of end of line for time period tt
                 sTemp = Semester.min(this.lastSem, tt.lastSemester);
                 sTemp = Semester.max(this.firstSemScrolled, sTemp);
                 let k = this.beginx + Semester.difference(this.firstSemScrolled, sTemp) * this.widthOne;
-                k = k + this.widthOne / 3;
+                // Original code divided by 3, but that made the lines too short.
+                k = k + this.widthOne / 2; 
+                // if the line for the next period should be contiguous with
+                // this one, add a bit to k j so that the lines will abut
                 if ((next != null) &&
                     this.isWithin(next) &&
                     Semester.equals(next.firstSemester,
                         tt.lastSemester.next())) {
                     k = k + this.widthOne / 2;
                 }
+
+                // Draw the lines for this period
                 this.setColor(tt.titleColor());
                 this.drawStatusLines(this.ctxMain, j, k, tt.status, this.liney);
             }
