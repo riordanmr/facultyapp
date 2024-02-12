@@ -53,7 +53,9 @@ class CSScrollbar {
         this.ctx.fillRect(0, this.curSliderPos, this.width, this.width);
       } else {
         // Fix this to use the horizontal scrollbar.
-        this.curSliderPos = (this.width - this.scrollbarSize) * (this.linesPerPage / this.maxLines);
+        this.pixelsPerScroll = (this.width - this.scrollbarSize) * (this.linesPerPage / this.maxLines);
+        var ratioDown = this.curLine / this.maxLines;
+        this.curSliderPos = (this.width - this.scrollbarSize) * ratioDown;
         this.ctx.fillRect(this.curSliderPos, 0, this.scrollbarSize, this.scrollbarSize);
       }
     }
@@ -89,7 +91,7 @@ class CSScrollbar {
 
       if (this.calculateNewLine(curPos)) {
         this.draw();
-        this.onScrollCallback(this.curLine);
+        this.onScrollCallback();
       }
     }
 
@@ -109,6 +111,6 @@ class CSScrollbar {
         }
       }
       this.draw();
-      this.onScrollCallback(this.curLine);
+      this.onScrollCallback();
     }
   }

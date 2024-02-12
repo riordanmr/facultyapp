@@ -72,14 +72,16 @@ h1 {
   }
 
   function configMain() {
-    ctxMain.font = "11pt sans-serif";
+    ctxMain.font = "11pt monospace";
   }
 
   function computeLinesPerPage () {
       return  Math.trunc(canvasMain.height / computeFontHeight(ctxMain));
   }
 
-  function drawMain(startLine, startPosHorz) {
+  function drawMain() {
+    var startLine = sbVert.curLine;
+    var startPosHorz = sbHorz.curLine;
     ctxMain.fillStyle = rgb(250,250,210);  // LightYellow
     ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
     ctxMain.fillStyle = rgb(0, 0, 0);
@@ -87,7 +89,7 @@ h1 {
     var idx = 1+startLine;
     var y;
     for (var i = 0; i < computeLinesPerPage() && idx <= MAXLINES; i++) {
-      var s = "Line " + idx + " of text ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      var s = "Line " + idx.toString().padStart(2, ' ') + " of text ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       s = s.substring(startPosHorz);
       y = i*fontHeight + fontHeight;
       ctxMain.fillText(s, 2, y);
@@ -100,18 +102,18 @@ h1 {
     configMain();
     
     sbVert = new CSScrollbar(canvasScrollbarVert, MAXLINES, computeLinesPerPage(), true,
-      function (startLine) {
-        drawMain(startLine);
+      function () {
+        drawMain();
       });
     sbVert.draw();
 
-    sbHorz = new CSScrollbar(canvasScrollbarHorz, MAXLINES, computeLinesPerPage(), false,
-      function (startLine) {
-        drawMain(startLine);
+    sbHorz = new CSScrollbar(canvasScrollbarHorz, MAXLINES, 10, false,
+      function () {
+        drawMain();
       });
     sbHorz.draw();
 
-    drawMain(0);
+    drawMain();
   }
 
   main();
