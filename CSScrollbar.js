@@ -13,8 +13,12 @@ class CSScrollbar {
       this.onScrollCallback = onScrollCallback;
 
       this.width = canvas.width;
-      this.scrollbarSize = canvas.width;
       this.height = canvas.height;
+      if (isVertical) {
+        this.scrollbarSize = canvas.width;
+      } else {
+        this.scrollbarSize = canvas.height;
+      }
       this.curLine = 0;
       this.isVertical = isVertical;
 
@@ -23,7 +27,9 @@ class CSScrollbar {
       this.handleWheelScroll = this.handleWheelScroll.bind(this);
 
       canvas.addEventListener("click", this.handleClick);  
-      canvas.addEventListener("wheel", this.handleWheelScroll);
+      if(isVertical) {
+        canvas.addEventListener("wheel", this.handleWheelScroll);
+      }
     }
 
     setMaxLines(maxLines) {
@@ -47,8 +53,8 @@ class CSScrollbar {
         this.ctx.fillRect(0, this.curSliderPos, this.width, this.width);
       } else {
         // Fix this to use the horizontal scrollbar.
-        this.curSliderPos = ((width - scrollbarSize) / max) * val;
-        this.ctx.fillRect(this.curSliderPos, 0, this.scrollbarSize, this.height);
+        this.curSliderPos = (this.width - this.scrollbarSize) * (this.linesPerPage / this.maxLines);
+        this.ctx.fillRect(this.curSliderPos, 0, this.scrollbarSize, this.scrollbarSize);
       }
     }
 
@@ -79,11 +85,9 @@ class CSScrollbar {
 
     handleClick(e) {
       var rect = e.target.getBoundingClientRect();
-      //var x = e.clientX - rect.left; //x position within the element.
-      var y = e.clientY - rect.top;  //y position within the element.
+      var curPos = this.isVertical ? e.clientY - rect.top : e.clientX - rect.left;
 
-      //console.log("handleClick here with event " + e + " and y " + y);
-      if (this.calculateNewLine(y)) {
+      if (this.calculateNewLine(curPos)) {
         this.draw();
         this.onScrollCallback(this.curLine);
       }
