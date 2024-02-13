@@ -21,13 +21,23 @@ h1 {
   margin: 0px;
 }
 
+#scrollbarhorz {
+  padding: 0px;
+  margin: 0px;
+  border: 0px;
+}
+
 .tablenopadding {
   border-spacing: 0;
   border-collapse: collapse;
 }
+
 .cellnopadding {
+  border: none;
   padding: 0 !important;
   margin: 0 !important;
+  font-size: 0pt; 
+  line-height: 0px;
 }
 
 </style>
@@ -37,6 +47,7 @@ h1 {
 
 <table class="tablenopadding">
   <tr>
+    <!-- #fafad2 is FacultyApp's main background color -->
     <td class="cellnopadding"><canvas id="canvasMain" width="300" height="300"></canvas></td>
     <td class="cellnopadding"><canvas id="scrollbarvert" width="15" height="300"></canvas></td>
   </tr>
@@ -82,7 +93,7 @@ h1 {
   function drawMain() {
     var startLine = sbVert.curLine;
     var startPosHorz = sbHorz.curLine;
-    ctxMain.fillStyle = rgb(250,250,210);  // LightYellow
+    ctxMain.fillStyle = rgb(250,250,210);  
     ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
     ctxMain.fillStyle = rgb(0, 0, 0);
     var fontHeight = computeFontHeight(ctxMain);
