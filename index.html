@@ -36,23 +36,35 @@
         }
     
         #canvasMain {
+            border: none;
             padding: 0px;
             margin: 0px;
         }
     
         #scrollbarvert {
+            border: none;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        #scrollbarHorz {
+            border: none;
             padding: 0px;
             margin: 0px;
         }
     
         .tablenopadding {
-            border-spacing: 0;
-            border-collapse: collapse;
+            border-spacing: 0 !important;
+            border-collapse: collapse !important;
+            margin: 0 !important;
         }
     
         .cellnopadding {
+            border: none !important;
             padding: 0 !important;
             margin: 0 !important;
+            font-size: 0pt; 
+            line-height: 0px;
         }
     </style>
     <!-- This is the equivalent of the embedded resource faclist.txt.
@@ -190,6 +202,10 @@
         <tr>
           <td class="cellnopadding"><canvas id="canvasMain" width="800" height="460"></canvas></td>
           <td class="cellnopadding"><canvas id="scrollbarVert" width="15" height="460"></canvas></td>
+        </tr>
+        <tr>
+            <td class="cellnopadding"><canvas id="scrollbarHorz" width="800" height="15"></canvas></td>
+            <td class="cellnopadding"></td>
         </tr>
       </table>
       
@@ -913,13 +929,14 @@
             // static message2 = "";
             static objCanvas;
 
-            constructor(canvasMain, canvasScrollVert) {
+            constructor(canvasMain, canvasScrollVert, canvasScrollHorz) {
                 this.canvasMain = canvasMain;
                 this.ctxMain = canvasMain.getContext("2d");
                 this.mainHeight = canvasMain.height;
                 this.mainWidth = canvasMain.width;
 
                 this.canvasScrollVert = canvasScrollVert;
+                this.canvasScrollHorz = canvasScrollHorz;
 
                 this.ctxMain.font = "10pt Arial,sans-serif";
 
@@ -976,10 +993,16 @@
                 // Account for the 5 header lines at the top that don't scroll.
                 linesPerPage -= 5;
                 this.scrollbarVert = new CSScrollbar(this.canvasScrollVert, maxLines,
-                    linesPerPage, true, function(curLine) {
+                    linesPerPage, true, function() {
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarVert.draw();
+
+                this.scrollbarHorz = new CSScrollbar(this.canvasScrollHorz, 80,
+                    60, false, function() {
+                        CSCanvas.objCanvas.paintCanvas();
+                    });
+                this.scrollbarHorz.draw();
             }
 
             stringWidth(s) {
@@ -1503,7 +1526,8 @@
         function main() {
             var canvasMain = document.getElementById("canvasMain");
             var canvasScrollVert = document.getElementById("scrollbarVert");
-            var canvas = new CSCanvas(canvasMain, canvasScrollVert);
+            var canvasScrollHorz = document.getElementById("scrollbarHorz");
+            var canvas = new CSCanvas(canvasMain, canvasScrollVert, canvasScrollHorz);
             canvas.paintCanvas();
 
         }
