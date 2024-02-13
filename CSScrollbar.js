@@ -21,15 +21,56 @@ class CSScrollbar {
       }
       this.curLine = 0;
       this.isVertical = isVertical;
+      this.isDragging = false;
+    //   this.onThumbDrag = onThumbDrag;
 
       // This is a trick to allow us to add a callback to the event listener.
       this.handleClick = this.handleClick.bind(this);
       this.handleWheelScroll = this.handleWheelScroll.bind(this);
+      this.handleMouseDown = this.handleMouseDown.bind(this);
+      this.handleMouseMove = this.handleMouseMove.bind(this);
+      this.handleMouseUp = this.handleMouseUp.bind(this);
 
       canvas.addEventListener("click", this.handleClick);  
       if(isVertical) {
         canvas.addEventListener("wheel", this.handleWheelScroll);
       }
+      this.canvas.addEventListener('mousedown', this.handleMouseDown);
+      this.canvas.addEventListener('mousemove', this.handleMouseMove);
+      this.canvas.addEventListener('mouseup', this.handleMouseUp);
+    }
+
+    handleMouseDown(e) {
+        // Check if the mouse is over the thumb here
+        // If it is, set isDragging to true
+        this.isDragging = true;
+    }
+
+    handleMouseMove(e) {
+        if (this.isDragging) {
+            var rect = e.target.getBoundingClientRect();
+            if(this.isVertical) {
+                var curPos = e.clientY - rect.top;
+                this.curSliderPos = curPos - this.scrollbarSize / 2;
+                if(this.curSliderPos < 0) {
+                    this.curSliderPos = 0;
+                }
+                this.curLine = Math.floor((this.curSliderPos / this.height) * this.maxLines);
+            } else {
+                var curPos = e.clientX - rect.left;
+                this.curSliderPos = curPos - this.scrollbarSize / 2;
+                if(this.curSliderPos < 0) {
+                    this.curSliderPos = 0;
+                }
+                this.curLine = Math.floor((this.curSliderPos / this.width) * this.maxLines);
+            }
+        }
+        this.draw();
+        this.onScrollCallback();
+    }
+
+    handleMouseUp(e) {
+        this.isDragging = false;
     }
 
     setMaxLines(maxLines) {
