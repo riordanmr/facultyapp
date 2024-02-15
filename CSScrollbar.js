@@ -64,9 +64,9 @@ class CSScrollbar {
                 }
                 this.curLine = Math.floor((this.curSliderPos / this.width) * this.maxLines);
             }
+            this.draw();
+            this.onScrollCallback();
         }
-        this.draw();
-        this.onScrollCallback();
     }
 
     handleMouseUp(e) {
@@ -116,7 +116,7 @@ class CSScrollbar {
           }
           //console.log("calculateNewLine: user clicked above the slider y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll+ " curSliderPos=" + this.curSliderPos);
         } else {
-          this.curLine += this.linesPerPage - 1;
+          this.curLine += this.linesPerPage;
           if (this.curLine >= this.maxLines) {
             this.curLine = this.maxLines-1;
           }

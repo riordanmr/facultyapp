@@ -998,8 +998,9 @@
                     });
                 this.scrollbarVert.draw();
 
-                this.scrollbarHorz = new CSScrollbar(this.canvasScrollHorz, 80,
-                    60, false, function() {
+                var sems= Semester.difference(this.firstSem,this.lastSem) + 1;
+                this.scrollbarHorz = new CSScrollbar(this.canvasScrollHorz, sems,
+                    10, false, function() {
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarHorz.draw();
@@ -1043,8 +1044,8 @@
                 this.ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
 
                 this.firstSemScrolled = this.firstSem;
-                //     let temp = drawing.scrollH.getValue();
-                //     for (let i = 0; i < temp; i = i + 1) firstSemScrolled = firstSemScrolled.next();
+                var temp = this.scrollbarHorz.curLine;
+                for (var i=0; i<temp; i= i+1) this.firstSemScrolled= this.firstSemScrolled.next();
                 this.liney = this.fontHeight;
                 this.paintLegend();
                 this.printHeaders(3 * this.liney);
