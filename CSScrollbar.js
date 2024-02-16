@@ -78,6 +78,16 @@ class CSScrollbar {
         this.draw();
     }
 
+    drawTriangle(x1,y1,x2,y2,x3,y3) {
+      this.ctx.fillStyle = 'black';
+      this.ctx.beginPath();
+      this.ctx.moveTo(x1, y1);
+      this.ctx.lineTo(x2, y2);
+      this.ctx.lineTo(x3, y3);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+
     draw () {
       // Draw the scrollbar itself. 
       this.ctx.fillStyle = '#d9d9d9';  // Used color picker to get this color from original applet.
@@ -88,10 +98,20 @@ class CSScrollbar {
       // Draw the scrollbar slider.
       this.ctx.fillStyle = '#aeaeae';  // Used color picker to get this color from original applet.
       if (this.isVertical) {
-        this.pixelsPerScroll = (this.height - this.scrollbarSize) * (this.linesPerPage / this.maxLines); 
+        this.pixelsPerScroll = (this.height - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines); 
         var ratioDown = this.curLine / this.maxLines;
-        this.curSliderPos = (this.height - this.scrollbarSize) * ratioDown;
+        this.curSliderPos = this.scrollbarSize + (this.height - 3*this.scrollbarSize) * ratioDown;
         this.ctx.fillRect(0, this.curSliderPos, this.width, this.width);
+
+        // Draw the triangle on which the user can click to scroll up.
+        this.drawTriangle(this.width / 2, this.width * 0.2,// top center
+          this.width * 0.2, this.width*0.8, // bottom left
+          this.width *0.8, this.width*0.8); // bottom right
+
+        // Draw the triangle on which the user can click to scroll down.
+        this.drawTriangle(this.width / 2, this.height - this.width * 0.2,// bottom center
+        this.width*0.2, this.height - this.width*0.8, // top left
+        this.width*0.8, this.height - this.width*0.8); // top right
       } else {
         // Fix this to use the horizontal scrollbar.
         this.pixelsPerScroll = (this.width - this.scrollbarSize) * (this.linesPerPage / this.maxLines);
