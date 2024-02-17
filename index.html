@@ -52,6 +52,37 @@
             padding: 0px;
             margin: 0px;
         }
+
+        #dlgAbout {
+            background-color: #fafad2;
+            font-family: Arial, sans-serif;
+        }
+
+       /* The Close Button */
+       .close {
+            color: black;
+            position: absolute;
+            top: 0em;
+            right: 0.33em;
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 0px;
+            cursor: pointer;
+       }
+
+        .author {
+            margin-left: 1em;
+            margin-top: 0.1em;
+            margin-bottom: 0.1em;
+        }
+
+        .author p {
+            margin: 0.4em 0;
+        }
+
+        .formoreinformation {
+            line-height: 150%;
+        }
     
         .tablenopadding {
             border-spacing: 0 !important;
@@ -197,6 +228,26 @@
         &nbsp;&nbsp;<button id="btnok" onclick="onOK();">OK</button>
         &nbsp;&nbsp;<button id="btnabout">About ...</button>
     </div>
+    <dialog id="dlgAbout">
+        <div>
+            <span onclick="document.getElementById('dlgAbout').close()" class="close">&times;</span>
+            <div>Original version developed by</div>
+            <div class="author">
+                <p>David Gries</p>
+                <p>Computer Science, Upson Hall</p>
+                <p>Cornell University</p>
+                <p>Ithaca, NY 14853</p>
+                <p>gries@cs.cornell.edu</p>
+            </div>
+            <div>JavaScript version by</div>
+            <div class="author">
+                <p> Mark Riordan</p>
+                <p>riordan@rocketmail.com</p>
+            </div>
+            <div class="formoreinformation">See <a href="https://www.cs.cornell.edu/gries/facultyunix/first.html">https://www.cs.cornell.edu/gries/facultyunix/first.html</a><br/>
+                for information about the original applet.</div>
+        </div>
+    </dialog>
 
     <table class="tablenopadding">
         <tr>
@@ -978,7 +1029,7 @@
                 //     let diff = Semester.difference(firstSem, lastSem);
                 //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
                 this.maxTitleWidth = 20 * this.stringWidth("1")
-                // This is the color of the veritical bars. The original code used
+                // This is the color of the vertical bars. The original code used
                 // Color.brighter(), which isn't available in JavaScript. I got this
                 // by running the original code and using a color picker.
                 this.colorVertical = "#d41405";
@@ -1004,6 +1055,10 @@
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarHorz.draw();
+
+                document.getElementById("btnabout").addEventListener("click", function() {
+                    document.getElementById("dlgAbout").showModal();
+                });
             }
 
             stringWidth(s) {
