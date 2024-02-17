@@ -4,6 +4,18 @@
 //
 // Mark Riordan  Feb 2024
 // Released under the MIT License.
+
+// Color of the background of a scrollbar.
+const colorScrollbar = '#d9d9d9';  // Used color picker to get this color from original applet.
+// Color of the slider in a scrollbar.
+const colorSlider = '#aeaeae';  // Used color picker to get this color from original applet.
+// Color of the arrows in the scrollbar - the triangles that the user clicks to scroll up or down.
+const colorArrow = '#000000'; 
+
+// The triangle is drawn with the top point at this ratio of the height of the box
+// enclosing the triangle, at the end of the scrollbar.
+const triangleOffsetRatio = 0.2;
+
 class CSScrollbar {
     constructor (canvas, maxLines, linesPerPage, isVertical, onScrollCallback) {
       this.canvas = canvas;
@@ -14,6 +26,7 @@ class CSScrollbar {
 
       this.width = canvas.width;
       this.height = canvas.height;
+      this.totalScrollbarLength = isVertical ? this.height : this.width;
       if (isVertical) {
         this.scrollbarSize = canvas.width;
       } else {
@@ -78,8 +91,36 @@ class CSScrollbar {
         this.draw();
     }
 
+    // Draw a square with curved corners.  This is used for scrollbar sliders.
+    // curveSize is the radius of the curve.
+    drawCurvedSquare(x, y, size, curveSize) {
+      var bendRatio = 0.25;  // Determined by trial and error.
+      this.ctx.beginPath();
+      // Start at the upper left corner.
+      this.ctx.moveTo(x+curveSize, y);
+      // Across the top.
+      this.ctx.lineTo(x + size - curveSize, y);
+      // Upper right corner.
+      this.ctx.quadraticCurveTo(x + size-curveSize*bendRatio, y+(curveSize*bendRatio), x + size, y + curveSize);
+      // Down the right side.
+      this.ctx.lineTo(x + size, y + size - curveSize);
+      // Lower right corner.
+      this.ctx.quadraticCurveTo(x + size-curveSize*bendRatio, y + size-curveSize*bendRatio, x + size - curveSize, y + size);
+      // Across the bottom.
+      this.ctx.lineTo(x+curveSize, y + size);
+      // Lower left corner.
+      this.ctx.quadraticCurveTo(x - curveSize*bendRatio, y + size-curveSize*bendRatio, x, y + size-curveSize);
+      // Up the left side.
+      this.ctx.lineTo(x, y+curveSize);
+      // Upper left corner.
+      this.ctx.quadraticCurveTo(x+curveSize*bendRatio, y, x+curveSize, y);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+
+    // Draw a triangle.  This is used for the up and down arrows in the scrollbar.
     drawTriangle(x1,y1,x2,y2,x3,y3) {
-      this.ctx.fillStyle = 'black';
+      this.ctx.fillStyle = colorArrow;
       this.ctx.beginPath();
       this.ctx.moveTo(x1, y1);
       this.ctx.lineTo(x2, y2);
@@ -88,40 +129,66 @@ class CSScrollbar {
       this.ctx.fill();
     }
 
+    // Draw the entire scrollbar.
     draw () {
       // Draw the scrollbar itself. 
-      this.ctx.fillStyle = '#d9d9d9';  // Used color picker to get this color from original applet.
+      this.ctx.fillStyle = colorScrollbar;
       //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.ctx.fillRect(0, 0, this.width, this.height);
-      //console.log(width);
 
       // Draw the scrollbar slider.
-      this.ctx.fillStyle = '#aeaeae';  // Used color picker to get this color from original applet.
+      this.ctx.fillStyle = colorSlider;
       if (this.isVertical) {
+        // Draw the slider.
         this.pixelsPerScroll = (this.height - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines); 
         var ratioDown = this.curLine / this.maxLines;
         this.curSliderPos = this.scrollbarSize + (this.height - 3*this.scrollbarSize) * ratioDown;
-        this.ctx.fillRect(0, this.curSliderPos, this.width, this.width);
+        this.drawCurvedSquare(0, this.curSliderPos, this.width, 0.3*this.width);
 
-        // Draw the triangle on which the user can click to scroll up.
-        this.drawTriangle(this.width / 2, this.width * 0.2,// top center
-          this.width * 0.2, this.width*0.8, // bottom left
-          this.width *0.8, this.width*0.8); // bottom right
+        // Draw the background of the top arrow.
+        this.ctx.fillStyle = colorSlider;
+        this.ctx.fillRect(0, 0, this.width, this.width);
+        // Draw the top arrow: the triangle on which the user can click to scroll up.
+        this.ctx.fillStyle = colorArrow;
+        this.drawTriangle(this.width / 2, this.width * triangleOffsetRatio,// top center
+          this.width * triangleOffsetRatio, this.width*(1.0-triangleOffsetRatio), // bottom left
+          this.width *(1.0-triangleOffsetRatio), this.width*(1.0-triangleOffsetRatio)); // bottom right
 
+        // Draw the background of the bottom arrow.
+        this.ctx.fillStyle = colorSlider;
+        this.ctx.fillRect(0, this.height - this.width, this.width, this.width);
         // Draw the triangle on which the user can click to scroll down.
-        this.drawTriangle(this.width / 2, this.height - this.width * 0.2,// bottom center
-        this.width*0.2, this.height - this.width*0.8, // top left
-        this.width*0.8, this.height - this.width*0.8); // top right
+        this.drawTriangle(this.width / 2, this.height - this.width * triangleOffsetRatio,// bottom center
+          this.width*triangleOffsetRatio, this.height - this.width*(1.0-triangleOffsetRatio), // top left
+          this.width*(1.0-triangleOffsetRatio), this.height - this.width*(1.0-triangleOffsetRatio)); // top right
       } else {
-        // Fix this to use the horizontal scrollbar.
-        this.pixelsPerScroll = (this.width - this.scrollbarSize) * (this.linesPerPage / this.maxLines);
+        // Draw the slider.
+        this.pixelsPerScroll = (this.width - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines);
         var ratioDown = this.curLine / this.maxLines;
-        this.curSliderPos = (this.width - this.scrollbarSize) * ratioDown;
-        this.ctx.fillRect(this.curSliderPos, 0, this.scrollbarSize, this.scrollbarSize);
+        this.curSliderPos = this.scrollbarSize + (this.width - 3*this.scrollbarSize) * ratioDown;
+        this.drawCurvedSquare(this.curSliderPos, 0, this.scrollbarSize, 0.3*this.scrollbarSize);
+
+        // Draw the background of the left arrow.
+        this.ctx.fillStyle = colorSlider;
+        this.ctx.fillRect(0, 0, this.height, this.height);
+        // Draw the left arrow: the triangle on which the user can click to scroll left.
+        this.ctx.fillStyle = colorArrow;
+        this.drawTriangle(this.height * triangleOffsetRatio, this.height / 2, // left center
+          this.height * (1.0-triangleOffsetRatio), this.height * triangleOffsetRatio, // top right
+          this.height * (1.0-triangleOffsetRatio), this.height * (1.0-triangleOffsetRatio)); // bottom right
+
+        // Draw the background of the right arrow.
+        this.ctx.fillStyle = colorSlider;
+        this.ctx.fillRect(this.width - this.height, 0, this.height, this.height);
+        // Draw the triangle on which the user can click to scroll right.
+        this.drawTriangle(this.width - this.height * triangleOffsetRatio, this.height / 2, // right center
+          this.width - this.height * (1.0-triangleOffsetRatio), this.height * triangleOffsetRatio, // top left
+          this.width - this.height * (1.0-triangleOffsetRatio), this.height * (1.0-triangleOffsetRatio)); // bottom left
+
       }
     }
 
-    // The user has clicked on the scrollbar at the relative location y.  
+    // The user has clicked on the scrollbar at location y in the scrollbar canvas.  
     // Calculate the line to scroll to and return true if it has changed.
     calculateNewLine(y) {
       if (y >= this.curSliderPos && y <= (this.curSliderPos + this.scrollbarSize)) {
@@ -129,8 +196,12 @@ class CSScrollbar {
         //console.log("calculateNewLine: user clicked on the slider");
         return false;
       } else {
-        if (y < this.curSliderPos) {
-          this.curLine -= this.linesPerPage - 1;
+        if (y < this.scrollbarSize) {
+          // User clicked in the top arrow.
+        } else if(y > this.totalScrollbarLength - this.scrollbarSize) {
+          // User clicked in the bottom arrow.
+        } else if(y < this.curSliderPos) {
+          this.curLine -= this.linesPerPage;
           if (this.curLine < 0) {
             this.curLine = 0;
           }
