@@ -193,25 +193,30 @@ class CSScrollbar {
     calculateNewLine(y) {
       if (y >= this.curSliderPos && y <= (this.curSliderPos + this.scrollbarSize)) {
         // User clicked on the slider.  No change in line number.
-        //console.log("calculateNewLine: user clicked on the slider");
         return false;
       } else {
         if (y < this.scrollbarSize) {
           // User clicked in the top arrow.
+          this.curLine--;
+          if (this.curLine < 0) {
+            this.curLine = 0;
+          }
         } else if(y > this.totalScrollbarLength - this.scrollbarSize) {
           // User clicked in the bottom arrow.
+          this.curLine++;
+          if (this.curLine >= this.maxLines) {
+            this.curLine = this.maxLines-1;
+          }
         } else if(y < this.curSliderPos) {
           this.curLine -= this.linesPerPage;
           if (this.curLine < 0) {
             this.curLine = 0;
           }
-          //console.log("calculateNewLine: user clicked above the slider y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll+ " curSliderPos=" + this.curSliderPos);
         } else {
           this.curLine += this.linesPerPage;
           if (this.curLine >= this.maxLines) {
             this.curLine = this.maxLines-1;
           }
-          //console.log("calculateNewLine: user clicked below the slider. y=" + y + " prevY=" + this.prevY + " curLine=" + this.curLine + " maxLines=" + this.maxLines + " linesPerPage=" + this.linesPerPage + " pixelsPerScroll=" + this.pixelsPerScroll + " curSliderPos=" + this.curSliderPos);
         }
         return true;
       }
