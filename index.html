@@ -70,17 +70,15 @@
             cursor: pointer;
        }
 
-        .author {
+        .authorindent {
             margin-left: 1em;
-            margin-top: 0.1em;
-            margin-bottom: 0.1em;
         }
 
         .author p {
             margin: 0.4em 0;
         }
 
-        .formoreinformation {
+        .bigvertspace {
             line-height: 150%;
         }
     
@@ -231,20 +229,21 @@
     <dialog id="dlgAbout">
         <div>
             <span onclick="document.getElementById('dlgAbout').close()" class="close">&times;</span>
-            <div>Original version developed by</div>
-            <div class="author">
-                <p>David Gries</p>
-                <p>Computer Science, Upson Hall</p>
-                <p>Cornell University</p>
-                <p>Ithaca, NY 14853</p>
-                <p>gries@cs.cornell.edu</p>
+            <div class="bigvertspace">Original version developed by</div>
+            <div class="authorindent bigvertspace">
+                David Gries<br/>
+                Computer Science, Upson Hall<br/>
+                Cornell University<br/>
+                Ithaca, NY 14853<br/>
+                gries@cs.cornell.edu
             </div>
-            <div>JavaScript version by</div>
-            <div class="author">
-                <p> Mark Riordan</p>
-                <p>riordan@rocketmail.com</p>
+            <div class="bigvertspace">JavaScript version by</div>
+            <div class="authorindent bigvertspace">
+                Mark Riordan<br/>
+                riordan@rocketmail.com>
             </div>
-            <div class="formoreinformation">See <a href="https://www.cs.cornell.edu/gries/facultyunix/first.html">https://www.cs.cornell.edu/gries/facultyunix/first.html</a><br/>
+            <div class="bigvertspace">See 
+                <a href="https://www.cs.cornell.edu/gries/facultyunix/first.html">https://www.cs.cornell.edu/gries/facultyunix/first.html</a><br/>
                 for information about the original applet.</div>
         </div>
     </dialog>
