@@ -702,7 +702,7 @@
             }
         }
         
-
+        // Given a string, break it into tokens and return them one at a time.
         class Tokenizer {
             constructor(str, delimiters) {
                 this.str = str;
@@ -719,7 +719,6 @@
             }
 
             nextToken() {
-                //console.log("nextToken here; str="+this.str.substring(0,40)+".. index="+this.index);
                 if (this.index >= this.str.length) {
                     return null;
                 }
@@ -735,7 +734,6 @@
                 }
 
                 let token = this.str.substring(startIndex, this.index);
-                //console.log("nextToken: startIndex=" + startIndex +" index="+this.index+" token="+token);
                 if (token.length === 0) {
                     return null;
                 }
@@ -744,18 +742,23 @@
             }
         }
 
+        // A tokenizer that reads integers and "words", where a word
+        // is a sequence of non-whitespace characters.
         class GriesTokenizer extends Tokenizer {
+            // Constructor --tokenize s
             constructor(s) {
                 super(s, "\n\t\r ");
             }
 
+            // return the next token as an integer
             nextIntToken() {
                 const s = this.nextToken();
-                if (!this.isDigit(s)) return -1;
+                if (!this.isDigits(s)) return -1;
                 return parseInt(s);
             }
 
-            isDigit(s) {
+            // = s consists solely of digits 0..9
+            isDigits(s) {
                 for (let i = 0; i < s.length; i++) {
                     if (s.charCodeAt(i) < 48) return false;
                     if (s.charCodeAt(i) > 57) return false;
@@ -763,6 +766,7 @@
                 return true;
             }
 
+            // return the next word --as explained above.
             nextWord() {
                 const s = this.nextToken();
                 if (s.charAt(0) !== '"') return s;
@@ -775,9 +779,10 @@
             }
         }
 
-
-
+        // A period of time at a certain title
         class TitleTime {
+            // Constants. All constants will always be in a contiguous range 1.. .
+            // Don't change ordering of these constants.            
             static FIELD = 1;
             static LECTURER = 2;
             static SRLECTURER = 3;
@@ -786,18 +791,24 @@
             static ASSOCPROF = 6;
             static FULLPROF = 7;
             static EMERITUS = 8;
-            static numTitles = 8;
-            static NOLEAVE = 1;
-            static SABBATIC = 2;
-            static OTHERLEAVE = 3;
+            static numTitles = 8;  // Number of different titles
 
+            // Leave status constants
+            static NOLEAVE = 1;     // Not on leave during the period
+            static SABBATIC = 2;    // On sabbatic during the period
+            static OTHERLEAVE = 3;  // On other leave during the period
+
+            // Constructor: a time at title t, status st, beginning in semester s1
+            // and ending in semester s2. st is one of the constants NOLEAVE, SABBATIC,
+            // or OTHERLEAVE.
             constructor(t, s1, s2, st = TitleTime.NOLEAVE) {
                 this.firstSemester = s1;
                 this.lastSemester = s2;
-                this.title = t;
-                this.status = st;
+                this.title = t;         // One of the constants LECTURER--FIELD
+                this.status = st;       // NOLEAVE, SABBATIC, or OTHERLEAVE
             }
 
+            // a String version of title
             static makeTitle(title) {
                 switch (title) {
                     case TitleTime.LECTURER: return "Lecturer";
@@ -812,14 +823,17 @@
                 }
             }
 
+            // Set the leave status to st (one of the three status constants)
             setStatus(st) {
                 this.status = st;
             }
 
+            // a String version of the title of this TitleTime
             makeTitle() {
                 return TitleTime.makeTitle(this.title);
             }
 
+            // A String version of the status during this period
             makeStatus() {
                 switch (this.status) {
                     case TitleTime.NOLEAVE: return "noleave";
@@ -829,10 +843,12 @@
                 }
             }
 
+            // A String version of this TitleTime
             toString() {
                 return `${this.makeTitle()} ${this.makeStatus()} ${this.firstSemester}--${this.lastSemester}`;
             }
 
+            // = the Color for this title
             titleColor() {
                 switch (this.title) {
                     case TitleTime.LECTURER: return rgb(52,236,2);
@@ -847,6 +863,7 @@
                 }
             }
 
+            // = the Color for title t (one of the above constants)
             static titleColor(t) {
                 let temp = new TitleTime(t, null, null);
                 return temp.titleColor();
