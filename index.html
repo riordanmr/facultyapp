@@ -870,34 +870,39 @@
             }
         }
 
+        // Record of a faculty member:
+        // name and a list of time periods with titles.
+        // These must be in chronological order and must not overlap.
         class Faculty {
-            constructor(name, t, st, s1, s2, t1 = null, s1Value = null, t2 = null, s2Value = null) {
+            // Constructor --a faculty member with name name, title t, leave-status st,
+            //               first semester s1, and last Semester s2.). s1,s2 are Semester
+            //               objects; t is one of the size constants of class TitleTime.
+            constructor(name, t, st, s1, s2) {
                 this.name = name;
+                // A linked list of periods of the faculty member. There
+                // is more than one element either because the member was in service at
+                // noncontiguous periods or because their title changed. Elements of
+                // the linked list are of type TitleTime.
                 this.periods = new LinkedList();
-                var firstSemester, lastSemester;
-
-                if (t1 !== null && s1Value !== null && t2 !== null && s2Value !== null) {
-                    firstSemester = t1 === "S" ? new Semester(0, s1Value) : new Semester(6, s1Value);
-                    lastSemester = t2 === "S" ? new Semester(0, s2Value) : new Semester(6, s2Value);
-                } else {
-                    firstSemester = s1;
-                    lastSemester = s2;
-                }
-
                 if (st !== null) {
-                    this.periods.append(new TitleTime(t, firstSemester, lastSemester, st));
+                    this.periods.append(new TitleTime(t, s1, s2, st));
                 } else {
-                    this.periods.append(new TitleTime(t, firstSemester, lastSemester));
+                    this.periods.append(new TitleTime(t, s1, s2));
                 }
 
+                // The last title for this faculty member in the
+                // range associated with the array in which it appears
                 this.lastTitle = t;
             }
 
+            // Add a new period for this person --title t, status st, first semester s1, and
+            // second semester s2
             addPeriod(t, st, s1, s2) {
                 this.periods.append(new TitleTime(t, s1, s2, st));
                 this.lastTitle = t;
             }
 
+            // = String version of this faculty member
             toString() {
                 var res= this.name;
                 let iter= new LinkedListIterator(this.periods);
@@ -920,6 +925,7 @@
                 return this.periods.inspectLast().lastSemester;
             }
 
+            // = Number of semesters at Cornell (Does not count non-sabbatical leaves)
             numSemesters() {
                 var num = 0;
                 var iter = new LinkedListIterator(this.periods);
@@ -932,11 +938,15 @@
                 return num;
             };
 
+            // = the last title for the faculty member that within the bounds of the currently
+            //    displayed years
+            //   Precondition: at least one semester of the faculty member is within the bounds
             lastTitle() {
                 let ans = 0;
                 let iter = this.periods[Symbol.iterator]();
                 let result;
-
+                // Invariant and is the last title within bounds for the elements of periods
+                // looked at thus far (0 if none)
                 while (!(result = iter.next()).done) {
                     let tt = result.value;
                     if (CSCanvas.isWithin(tt)) {
@@ -994,6 +1004,7 @@
 
                 this.error = false;
                 this.message1 = "";
+                this.message2 = "";
                 this.firstSem = null;
                 this.lastSem = new Semester(0, 1999);
                 this.lastPossibleSem = new Semester(0, 1999);
