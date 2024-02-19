@@ -11,11 +11,11 @@
     This version attempts to recreate the functionality and appearance of the original 
     as accurately as reasonably possible.
 
-    Most of the code here is a translation of the original Java code to JavaScript.
+    Much of the code here is a translation of the original Java code to JavaScript.
     Several automated tools were used to convert the Java code to JavaScript, including
-    codeconvert.ai, blackbox.ai, www.stratacode.com/javaToJS/online.html, and Github Copilot. 
-    The resulting JavaScript code was then manually edited to fix errors and improve readability.
-
+    codeconvert.ai, blackbox.ai, www.stratacode.com/javaToJS/online.html, and Github Copilot.
+    There was also a fair bit of manual coding.
+    
     Mark Riordan  January 2024
 --> 
 <head>
@@ -96,43 +96,10 @@
             line-height: 0px;
         }
     </style>
-    <!-- This is the equivalent of the embedded resource faclist.txt.
-    -->
+    <!-- This is the equivalent of the embedded resource faclist.txt.  -->
     <script type="text/javascript" src="faclist.js"></script>
-
+    <!-- Class to implement scrollbars. -->
     <script type="text/javascript" src="CSScrollbar.js"></script>
-
-    <script>
-        // Return a promise that resolves to the text of the file.
-        // ** Currently not used.
-        function loadFacList() {
-            var result = null;
-
-            // URL of the text file
-            var url = "faclist.txt";
-            // Use fetch() to load the text file
-            fetch(url)
-                .then(response => {
-                    // Check if the response is successful
-                    if (!response.ok) {
-                        alert("bad status: " + response.status);
-                        throw new Error("Failed to load the text file.");
-                    }
-                    // Use text() to extract the text from the response
-                    return response.text();
-                })
-                .then(text => {
-                    alert("good response: " + text);
-                    return text;
-                })
-                .catch(error => {
-                    // Handle the error
-                    alert("I caught an error: " + error);
-                    console.error("An error occurred:", error);
-                });
-
-        }
-    </script>
 </head>
 
 <body>
@@ -180,6 +147,7 @@
         </div>
     </dialog>
 
+    <!-- The canvas for the main display, plus canvases for the scrollbars -->
     <table class="tablenopadding">
         <tr>
           <td class="cellnopadding"><canvas id="canvasMain" width="800" height="460"></canvas></td>
@@ -215,6 +183,7 @@
             return '#' + toHex(r) + toHex(g) + toHex(b);
         }
 
+        // Class to represent a pair of integer values x and y.
         // Converted from Coordinates.java by blackbox.ai:
         class Coordinates {
             constructor(h, k) {
@@ -223,13 +192,10 @@
             }
         }
 
+        // A representation of a semester
+        // (e.g. Fall 1997 or Spring 1998)
         // Converted from Semester.java by codeconvert.ai
         class Semester {
-            //constructor() {
-            //    this.yr = 0;
-            //    this.sem = 0;
-            //}
-
             // Constructor --the semester that is in month m and 4-digit year y.
             // Months 0..5 are the spring semester; months 6..11, fall semester
             constructor(m, y) {
@@ -238,41 +204,49 @@
                 else this.sem = 1;
             }
 
+            // Yield the semester, as a String "F" or "S"
             semester() {
                 if (this.sem === 0) return "S";
                 return "F";
             }
 
+            // Set the semester to t (which is "F" or "S")
             setSemester(t) {
                 if (t === "S")
                     this.sem = 0;
                 else this.sem = 1;
             }
 
+            // Yield the year
             year() {
                 return this.yr;
             }
 
+            // Set the year to i
             setYear(i) {
                 this.yr = i;
             }
 
+            // = Semester s1 comes before or is the same as Semester s2
             static lesseq(s1, s2) {
                 if (s1.year() < s2.year()) return true;
                 if (s1.year() > s2.year()) return false;
                 return s1.sem <= s2.sem;
             }
 
+            // = Semester s1 comes before Semester s2
             static less(s1, s2) {
                 if (s1.year() < s2.year()) return true;
                 if (s1.year() > s2.year()) return false;
                 return s1.sem < s2.sem;
             }
 
+            // = Semesters s1 and s2 are the same
             static equals(s1, s2) {
                 return s1.yr === s2.yr && s1.sem === s2.sem;
             }
 
+            // = the Semester following this Semester
             next() {
                 let s = new Semester();
                 s.yr = this.yr;
@@ -282,6 +256,9 @@
                 return s;
             }
 
+            // = the number of Semesters between Semesters s1 and s2  --i.e.
+            //   the number of times s1.next() is to be executed to get to s2
+            //   (Precondition: lesseq(s1, s2); otherwise, 0 is returned)
             static difference(s1, s2) {
                 if (this.less(s2, s1)) return 0;
                 if (s1.sem === s2.sem)
@@ -289,22 +266,26 @@
                 return 1 + 2 * (s2.yr - s1.next().yr);
             }
 
+            // = the minimum of Semesters s1 and s2
             static min(s1, s2) {
                 if (this.lesseq(s1, s2)) return s1;
                 return s2;
             }
 
+            // = the maximum of Semesters s1 and s2
             static max(s1, s2) {
                 if (this.lesseq(s1, s2)) return s2;
                 return s1;
             }
 
+            // = a String version of this Semester
             toString() {
                 if (this.sem === 0) return "S" + this.yr;
                 return "F" + this.yr;
             }
         }
 
+        // A node of a linked list (or class LinkedList)
         class LinkedListNode {
             constructor(value = null) {
                 this.value = value;
@@ -312,7 +293,10 @@
             }
         }
 
+        // Class of the base of a linked list, with head/tail
+        // pointers, with objects that are owned by the list
         class LinkedList {
+            // Constructor: a list with one node with value value
             constructor(value = null) {
                 if (value === null) {
                     this.head = null;
@@ -324,6 +308,7 @@
                 this.sz = value === null ? 0 : 1;
             }
 
+            // Prepend value to list
             prepend(value) {
                 const newNode = new LinkedListNode(value);
                 newNode.next = this.head;
@@ -334,12 +319,15 @@
                 this.sz++;
             }
 
+            // Change the value of the first entry of the
+            // nonempty list to value
             change(value) {
                 if (this.head !== null) {
                     this.head.value = value;
                 }
             }
 
+            // Append value to list
             append(value) {
                 if (this.head === null) {
                     this.head = new LinkedListNode(value);
@@ -351,6 +339,8 @@
                 this.sz++;
             }
 
+            // Remove first element of list and return it --return
+            // null if list is empty
             remove() {
                 if (this.head === null) {
                     return null;
@@ -364,10 +354,14 @@
                 return value;
             }
 
+            // = first element of list (or null if list is empty)
+            // It should not be changed, but only inspected
             inspect() {
                 return this.head === null ? null : this.head.value;
             }
 
+            // = element n of the list (or null if not possible)
+            // Precondition: 0<= n< this.size()
             inspectAt(index) {
                 let current = this.head;
                 let i = 0;
@@ -378,24 +372,31 @@
                 return current === null ? null : current.value;
             }
 
+            // = last element of list (or null if list is empty)
+            // The element should not be changed, but only inspected
             inspectLast() {
                 return this.tail === null ? null : this.tail.value;
             }
 
+            // = list is empty
             isEmpty() {
                 return this.head === null;
             }
 
+            // = size of list
             size() {
                 return this.sz;
             }
 
+            // Set the list to an empty list
             clear() {
                 this.head = null;
                 this.tail = null;
                 this.sz = 0;
             }
 
+            // Return the list but truncated to its first n elements
+            // Precondition: 0 <= n <= this.size()
             truncate(n) {
                 if (n === 0) {
                     this.clear();
@@ -412,6 +413,9 @@
                 return this;
             }
 
+            // Remove and return last element of the list (return null
+            // if none). This method is inefficient, because of the
+            // list's structure.
             removeLast() {
                 if (this.sz === 0) {
                     return null;
@@ -434,6 +438,8 @@
                 return value;
             }
 
+            // a printable version of the elements of this LinkedList
+            // --assuming that toString() works for its elements
             toString() {
                 let current = this.head;
                 let str = "(";
@@ -450,26 +456,38 @@
             }
         }
 
+        // Provide methods for iterating over objects
+        // in a LinkedList list
         class LinkedListIterator {
+            // Constructor: to iterate over list s
             constructor(linkedList) {
+                // head of the list
                 this.head = linkedList.head;
+                // current node to be processed
+                // (null if none)
                 this.node = this.head;
+                // index of current node (first is 0)
                 this.index = 0;
             }
 
+            // change the current node to the beginning of the list
             reset() {
                 this.node = this.head;
                 this.index = 0;
             }
 
+            // = "current node is non-null"
             okay() {
                 return this.node !== null;
             }
 
+            // = value of current node --call only if node is non-null
             data() {
                 return this.node.value;
             }
 
+            // = change the current node to the next one in the list
+            //   (or null if there is no next one)
             next() {
                 if (this.node !== null) {
                     this.node = this.node.next;
@@ -477,24 +495,33 @@
                 }
             }
 
+            // = index of current element (0 if past end of list)
             getIndex() {
                 return this.node !== null ? this.index : 0;
             }
         }
 
 
-
+        // A dynamic array of elements of class Faculty
         // Converted from DynArray.java by codeconvert.ai
         class DynArray {
-            static sort0 = BYNAME;
+            // sort0, sort1, and sort2 are used to define a sorting order.
+            // Each is one of the values CSCanvas.BYNAME--CS_Canvas.BYTITLE
+            // When an array is to be sorted, these values are used: sort0 defines
+            // the first sort key, sort1 the second, and sort2 the third.  These
+            // variables are static so that, when a copy is made of the array,
+            // the current values are used. They are changed in method sort.
+            static sort0 = BYNAME;  // Initally, all say sort on name
             static sort1 = BYNAME;
             static sort2 = BYNAME;
 
+            // Constructor: an array of 0 elements but allocation 10
             constructor() {
                 this.b = new Array(10);
                 this.sz = 0;
             }
 
+            // Add element f to the array
             add(f) {
                 if (this.sz === this.b.length) {
                     let bTemp = this.b;
@@ -509,14 +536,18 @@
                 this.sz += 1;
             }
 
+            // = element i of the array
+            // Precondition: 0<=i<sz
             element(i) {
                 return this.b[i];
             }
 
+            // = number of filled elements in the array (not the number allocated)
             size() {
                 return this.sz;
             }
 
+            // = String verson of elements of the array
             toString() {
                 let s = '';
                 for (let i = 0; i < this.sz; i++) {
@@ -525,25 +556,33 @@
                 return s;
             }
 
+            // Swap b[i] and b[k]
             swap(i, k) {
                 let temp = this.b[i];
                 this.b[i] = this.b[k];
                 this.b[k] = temp;
             }
 
+            // Remove element i from the array (put the last element in its place)
+            // It is assumed that 0 <= i < this.size().
             remove(i) {
                 this.b[i] = this.b[this.sz - 1];
                 this.sz -= 1;
             }
 
+            // = "x came before y"
             static cameBefore(x, y) {
                 return Semester.less(x.firstSemester(), y.firstSemester());
             }
 
+            // = x left before y
             static leftBefore(x, y) {
                 return Semester.less(x.lastSemester(), y.lastSemester());
             }
 
+            // sort0,sort1,sort2:= sortChoice,sort0,sort1, where sortChoice is
+            // one of the values CSCanvas.BYNAME--CSCanvas.BYTITLE.
+            // Then sort this array based on sort0, sort1, sort2
             sort(sortChoice) {
                 DynArray.sort2 = DynArray.sort1;
                 DynArray.sort1 = DynArray.sort0;
@@ -551,6 +590,7 @@
                 this.quickSort();
             }
 
+            // = a copy of the array
             copy() {
                 let c = new DynArray();
                 for (let i = 0; i < this.sz; i++) {
@@ -559,6 +599,7 @@
                 return c;
             }
 
+            // = the number of faculty in the array whose lastTitle field is tt
             numTitle(tt) {
                 let n = 0;
                 for (let i = 0; i < this.sz; i++) {
@@ -569,10 +610,15 @@
                 return n;
             }
 
+            // 0 <= h < k-1 < this.size(). Let x some value in this[h..k-1]
+            // Permute this[h..k-1] and return a value p such that
+            // this[h..p-1] <= x = p <= this[p+1..k-1]
             partition(h, k) {
+                // Permute this.h, this[(h+k)/2], this[k-1] so that b.h is the median
+                // (code still to be written)
                 let q = h + 1;
                 let p = k - 1;
-
+                // invariant: this.h=x, this[h+1..q-1]<=x, and this[p+1..k-1]>=x
                 while (q <= p) {
                     if (this.lessTest(q, h)) {
                         q += 1;
@@ -587,28 +633,32 @@
                 if (p + 2 === q) {
                     p += 1;
                 }
-
+                // Result: this.h=x, this[h+1..p]<=x, this[p+1..k-1]>=x
                 this.swap(h, p);
                 return p;
             }
 
+            // Sort this array, inplace, using Quicksort, where based on globals s0 and s1
             quickSort() {
                 let t = new LinkedList();
-                let mysize = this.size();
+                // Invariant: The array is sorted if each of the segments
+                //             this[e.x .. e.y-1] are sorted for e an element of t
                 t.append(new Coordinates(0, this.size()));
 
                 while (t.size() !== 0) {
                     let co = t.remove();
                     let h = co.x;
                     let k = co.y;
-                    if (k === h) {
+                    if (k === h) {                      // Partition of size 0
                         // Do nothing
                     } else if (k - h <= 2) {
-                        if (this.lessTest(k - 1, h)) {
+                        if (this.lessTest(k - 1, h)) {  // Partition of size 1 or 2
                             this.swap(k - 1, h);
                         }
-                    } else {
+                    } else {                            // Partition of size > 2
                         let j = this.partition(h, k);
+                        // this[h..j-1]<=this.j<=this[j+1..k-1]
+                        // Place the larger of the two segments on t first, then the smaller                        
                         if (k - j - 1 > j - h) {
                             t.prepend(new Coordinates(j + 1, k));
                             t.prepend(new Coordinates(h, j));
@@ -620,6 +670,8 @@
                 }
             }
 
+            //= b[i]<b[j], where < is defined depending on s:
+            // 0=name,1=title,2=first sem, 3=last sem, 4=length of stay
             less(i, j, s) {
                 switch (s) {
                     case BYNAME:
@@ -637,17 +689,18 @@
                 }
             }
 
+            // = b[i]<b[j], where < is defined depending on sort0, sort1, sort2 (see
+            // their definition)
             lessTest(i, j) {
                 if (this.less(i, j, DynArray.sort0)) return true;
                 if (this.less(j, i, DynArray.sort0)) return false;
-
+                // b[i] = b[j] on first key
                 if (this.less(i, j, DynArray.sort1)) return true;
                 if (this.less(j, i, DynArray.sort1)) return false;
-
+                // b[i] = b[j] on second key
                 return this.less(i, j, DynArray.sort2);
             }
         }
-
         
 
         class Tokenizer {
@@ -1431,22 +1484,8 @@
                     }
                     d.add(f);
                 }
-                //console.log("d=" + d);
-                //alert("d=" + d);
                 return d;
             }
-
-
-            // static replace(s, c1, c2) {
-            //     let t = new StringBuffer(s);
-            //     let i = 0;
-            //     while (i != t.length()) {
-            //         if (t.charAt(i) == c1)
-            //             t.setCharAt(i, c2);
-            //         i = i + 1;
-            //     }
-            //     return t.toString();
-            // }
 
             drawVerticals() {
                 let saveColor = this.getColor();
