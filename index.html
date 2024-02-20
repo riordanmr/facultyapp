@@ -167,6 +167,8 @@
         const BYLENGTH = 3;
         const BYTITLE = 4;
 
+        const LASTYEAR = 1998;
+
         // Given a context, compute the number of pixels between consecutive lines of text,
         // including any necessary leading.
         // Thanks to https://stackoverflow.com/questions/1134586
@@ -939,8 +941,8 @@
             };
 
             // = the last title for the faculty member that within the bounds of the currently
-            //    displayed years
-            //   Precondition: at least one semester of the faculty member is within the bounds
+            //  displayed years
+            // Precondition: at least one semester of the faculty member is within the bounds
             lastTitle() {
                 let ans = 0;
                 let iter = this.periods[Symbol.iterator]();
@@ -958,37 +960,10 @@
             }
         }
 
-
+        // Represents the canvas on which the faculty members are displayed; does not
+        // include the scrollbars.  The canvas is divided into two parts: the top part
+        // contains the headers, and the bottom part contains the faculty members.
         class CSCanvas /*extends Canvas*/ {
-            // static drawing;
-            // static length;
-            // static width;
-            // static maxTitleWidth;
-            // static m_g;
-            // static font;
-            // static fontM;
-            // static fontHeight;
-            // static charWidth;
-            // static widthOne;
-            // static firstPossibleSem;
-            // static lastPossibleSem;
-            // static firstSem;
-            // static lastSem;
-            // static firstSemScrolled;
-            // backBuffer;
-            // backG;
-
-            // static sortMethod = CSCanvas.BYNAME;
-            // static beginx;
-            // static beginy;
-            // static startVerticals;
-            // static liney;
-            // static beginFaculty;
-            // static bigFaculty;
-            // static faculty;
-            // error = false;
-            // static message1 = "";
-            // static message2 = "";
             static objCanvas;
 
             constructor(canvasMain, canvasScrollVert, canvasScrollHorz) {
@@ -1006,18 +981,11 @@
                 this.message1 = "";
                 this.message2 = "";
                 this.firstSem = null;
-                this.lastSem = new Semester(0, 1999);
-                this.lastPossibleSem = new Semester(0, 1999);
+                this.lastSem = new Semester(0, LASTYEAR+1);
+                this.lastPossibleSem = new Semester(0, LASTYEAR+1);
                 this.colorNames = rgb(16, 4, 177);
                 this.colorBlack = rgb(0, 0, 0);
 
-                //     //super();
-                //     drawing = d;
-                //     setBackground(new Color(250, 250, 210));
-                //     let todaysDate = new Date();
-                
-                //     lastSem = new Semester(todaysDate.getMonth(),
-                //       todaysDate.getFullYear());
                 this.bigFaculty = this.parse();
                 if (this.bigFaculty != null) {
                     this.faculty = this.bigFaculty.copy();
@@ -1026,8 +994,6 @@
                     this.firstSem = this.firstPossibleSem;
                     this.faculty.sort(BYNAME);
                 }
-                //     font = new Font("Monospaced", Font.PLAIN, 10);
-                //     fontM = getFontMetrics(font);
                 this.charWidth = this.stringWidth('1');
                 // The Java applet used 2 + charWidth, but in order to recreate its appearance,
                 // I had to use 1 + charWidth.
@@ -1037,9 +1003,6 @@
                 this.beginx = 150;
                 this.liney = this.fontHeight;
                 this.startVerticals = 6 * this.fontHeight;
-                //     length = fontHeight * (5 + faculty.size()) + 5;
-                //     let diff = Semester.difference(firstSem, lastSem);
-                //     width = beginx + (diff + 1) * widthOne + 2 * widthOne + beginx;
                 this.maxTitleWidth = 20 * this.stringWidth("1")
                 // This is the color of the vertical bars. The original code used
                 // Color.brighter(), which isn't available in JavaScript. I got this
@@ -1048,6 +1011,7 @@
 
                 CSCanvas.objCanvas = this;
 
+                // Create objects to handle the vertical and horizontal scrollbars.
                 var maxLines = this.faculty.size();
                 // Set the number of lines per scroll of the page to one less than
                 // the number of lines that fit in the canvas, so that the last
@@ -1100,14 +1064,13 @@
 
             // Draw the entire canvas, including headers and faculty members.
             paintCanvas() {
-                //     m_g = g;
                 if (this.error) {
                     this.drawString(this.ctxMain, "Sorry, there is an error in the input.", 2, this.liney);
                     this.drawString(this.ctxMain, this.message1, 2, this.liney + this.fontHeight);
                     this.drawString(this.ctxMain, this.message2, 2, this.liney + 2 * this.fontHeight);
                 }
 
-                this.ctxMain.fillStyle = rgb(250,250,210);  // LightYellow
+                this.ctxMain.fillStyle = rgb(250,250,210);  // Light yellow
                 this.ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
 
                 this.firstSemScrolled = this.firstSem;
@@ -1557,7 +1520,7 @@
         // yearToSelect is the year to select by default.
         function initSelect(id, yearToSelect) {
             var select = document.getElementById(id);
-            for (var year = 1965; year <= 1998; year++) {
+            for (var year = 1965; year <= LASTYEAR; year++) {
                 var option = document.createElement("option");
                 option.value = year;
                 option.text = year;
@@ -1571,7 +1534,7 @@
         // Initialize the HTML.
         function initHTML() {
             initSelect("selfirst", 1965);
-            initSelect("sellast", 1998);
+            initSelect("sellast", LASTYEAR);
         }
 
         function onOK() {
