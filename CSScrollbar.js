@@ -26,16 +26,20 @@ class CSScrollbar {
 
       this.width = canvas.width;
       this.height = canvas.height;
-      this.totalScrollbarLength = isVertical ? this.height : this.width;
       if (isVertical) {
         this.scrollbarSize = canvas.width;
+        this.totalScrollbarLength = canvas.height;
       } else {
         this.scrollbarSize = canvas.height;
+        this.totalScrollbarLength = canvas.width;
       }
       this.curLine = 0;
       this.isVertical = isVertical;
       this.isDragging = false;
-    //   this.onThumbDrag = onThumbDrag;
+      // curSliderPos is the location of the slider, relative to the top 
+      // or left of the scrollbar canvas.
+      // It will never be 0, due to the arrows at the end of the scrollbar.
+      this.curSliderPos = this.scrollbarSize;
 
       // This is a trick to allow us to add a callback to the event listener.
       this.handleClick = this.handleClick.bind(this);
@@ -51,39 +55,6 @@ class CSScrollbar {
       this.canvas.addEventListener('mousedown', this.handleMouseDown);
       this.canvas.addEventListener('mousemove', this.handleMouseMove);
       this.canvas.addEventListener('mouseup', this.handleMouseUp);
-    }
-
-    handleMouseDown(e) {
-        // Check if the mouse is over the thumb here
-        // If it is, set isDragging to true
-        this.isDragging = true;
-    }
-
-    handleMouseMove(e) {
-        if (this.isDragging) {
-            var rect = e.target.getBoundingClientRect();
-            if(this.isVertical) {
-                var curPos = e.clientY - rect.top;
-                this.curSliderPos = curPos - this.scrollbarSize / 2;
-                if(this.curSliderPos < 0) {
-                    this.curSliderPos = 0;
-                }
-                this.curLine = Math.floor((this.curSliderPos / this.height) * this.maxLines);
-            } else {
-                var curPos = e.clientX - rect.left;
-                this.curSliderPos = curPos - this.scrollbarSize / 2;
-                if(this.curSliderPos < 0) {
-                    this.curSliderPos = 0;
-                }
-                this.curLine = Math.floor((this.curSliderPos / this.width) * this.maxLines);
-            }
-            this.draw();
-            this.onScrollCallback();
-        }
-    }
-
-    handleMouseUp(e) {
-        this.isDragging = false;
     }
 
     setMaxLines(maxLines) {
@@ -208,11 +179,13 @@ class CSScrollbar {
             this.curLine = this.maxLines-1;
           }
         } else if(y < this.curSliderPos) {
+          // The user has clicked above the slider, meaning page up.
           this.curLine -= this.linesPerPage;
           if (this.curLine < 0) {
             this.curLine = 0;
           }
         } else {
+          // The user has clicked below the slider, meaning page down.
           this.curLine += this.linesPerPage;
           if (this.curLine >= this.maxLines) {
             this.curLine = this.maxLines-1;
@@ -250,4 +223,31 @@ class CSScrollbar {
       this.draw();
       this.onScrollCallback();
     }
+
+    handleMouseDown(e) {
+      // Check if the mouse is over the thumb.
+      var rect = e.target.getBoundingClientRect();
+      var curPos = this.isVertical ? e.clientY - rect.top : e.clientX - rect.left;
+      if(curPos >= this.curSliderPos && curPos < this.curSliderPos + this.scrollbarSize) {
+        this.isDragging = true;
+      }
+    }
+
+    handleMouseMove(e) {
+      if (this.isDragging) {
+        var rect = e.target.getBoundingClientRect();
+        var curPos = this.isVertical ? e.clientY - rect.top : e.clientX - rect.left;
+        var ratio = (curPos - this.scrollbarSize) / (this.totalScrollbarLength-3*this.scrollbarSize);
+        if(ratio >= 1.0) ratio = 0.9999;
+        if(ratio < 0.0) ratio = 0.0;
+        this.curLine = Math.floor(ratio * this.maxLines);
+        this.draw();
+        this.onScrollCallback();
+      }
+    }
+
+    handleMouseUp(e) {
+      this.isDragging = false;
+    }
+
   }
