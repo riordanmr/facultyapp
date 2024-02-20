@@ -1065,6 +1065,7 @@
             // Draw the entire canvas, including headers and faculty members.
             paintCanvas() {
                 if (this.error) {
+                    // An error message occurred. print it and return.
                     this.drawString(this.ctxMain, "Sorry, there is an error in the input.", 2, this.liney);
                     this.drawString(this.ctxMain, this.message1, 2, this.liney + this.fontHeight);
                     this.drawString(this.ctxMain, this.message2, 2, this.liney + 2 * this.fontHeight);
@@ -1073,6 +1074,8 @@
                 this.ctxMain.fillStyle = rgb(250,250,210);  // Light yellow
                 this.ctxMain.fillRect(0, 0, canvasMain.width, canvasMain.height);
 
+                // Calculate the first semester, firstSemScrolled, to appear in the
+                // horizontally scrolled canvas
                 this.firstSemScrolled = this.firstSem;
                 var temp = this.scrollbarHorz.curLine;
                 for (var i=0; i<temp; i= i+1) this.firstSemScrolled= this.firstSemScrolled.next();
@@ -1092,6 +1095,9 @@
                 this.setColor(this.colorBlack);
                 let s = this.firstSemScrolled;
                 let xF = this.beginx;
+                //invariant: Semesters less than s have been printed;
+                //           the "F" or "S" for the semester goes at horizontal
+                //           position xF and vertical position beginy                
                 while (Semester.lesseq(s, this.lastSem)) {
                     // The original code used xF+1, but that put the semester letter
                     // too far to the right.
@@ -1106,13 +1112,18 @@
                 this.setColor(saveColor);
             }
 
-            // Display the current page of faculty members. Headers are not included.
+            // Paint the elements of faculty beginning at vertical position liney
+            // and advance liney accordingly.
+            // Draw only one page's worth.  Headers are not included.
             drawFaculty(faculty) {
                 let saveColor = this.getColor();
-                //let i = drawing.scrollV.getValue();
+                // Set i to the index of the first faculty member to paint.
+                // This is the value of the vertical scrollbar.
                 var i = this.scrollbarVert.curLine;
                 let maxi = Math.trunc(i + (this.mainHeight - 5) / this.fontHeight + 1 - 5);
                 if (maxi > faculty.size()) maxi = faculty.size();
+                // Invariant: i faculty have been painted, and number i goes at
+                // y-coordinate liney                
                 while (i < maxi) {
                     this.paintFaculty(faculty.element(i));
                     i = i + 1;
@@ -1121,9 +1132,13 @@
                 this.setColor(saveColor);
             }
 
-            // Paint the periods for a single faculty member.
+            // Paint faculty member f
             paintFaculty(f) {
                 this.setColor(this.colorNames);
+                // Draw the name, along with the number of semesters if the faculty are being sorted
+                // by number of semesters
+                // Store in st the prefix of the name that fits in given space and
+                // in suffix either "" or the number of years in service                
                 let st = f.name;
                 let suffix = "";
                 if (this.sortMethod == BYLENGTH) {
@@ -1148,8 +1163,14 @@
                 }
 
                 this.drawString(this.ctxMain, st + suffix, 2, this.liney);
+
+                // Paint the periods of service for f
                 let iter = new LinkedListIterator(f.periods);
                 let previous = null;
+                // Invariant: iter.data() is the next TitleTime to (possibly) paint for
+                //            this faculty member, and previous is the previous
+                //            TitleTime (null if none). TitleTimes before iter.data()
+                //            have been printed.                
                 while (iter.okay()) {
                     let tt = iter.data();
                     iter.next();
@@ -1161,6 +1182,7 @@
                 }
                 this.firstThreeDots(f);
                 this.lastThreeDots(f);
+                // Print the name on the right
                 let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
                 let k = this.beginx + (diff + 1) * this.widthOne + 2 * this.widthOne;
                 this.drawString(this.ctxMain, f.name, k, this.liney);
