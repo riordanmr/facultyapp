@@ -195,6 +195,7 @@ class CSScrollbar {
       }
     }
 
+    // Handle a click on the scrollbar.
     handleClick(e) {
       var rect = e.target.getBoundingClientRect();
       var curPos = this.isVertical ? e.clientY - rect.top : e.clientX - rect.left;
@@ -205,6 +206,7 @@ class CSScrollbar {
       }
     }
 
+    // Handle a mouse wheel scroll event.
     handleWheelScroll(e) {
       var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
       if (delta > 0) {
@@ -224,6 +226,8 @@ class CSScrollbar {
       this.onScrollCallback();
     }
 
+    // Handle a mouse down event on the scrollbar.
+    // This is not the same as a click; the user may be dragging the slider.
     handleMouseDown(e) {
       // Check if the mouse is over the thumb.
       var rect = e.target.getBoundingClientRect();
@@ -233,6 +237,7 @@ class CSScrollbar {
       }
     }
 
+    // Handle the mouse moving, possibly while the user is dragging the slider.
     handleMouseMove(e) {
       if (this.isDragging) {
         var rect = e.target.getBoundingClientRect();
