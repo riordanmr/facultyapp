@@ -1559,14 +1559,32 @@
             initSelect("sellast", LASTYEAR);
         }
 
+        // Given the id of an HTML select element, select the supplied option.
+        function setSelectOption(idSelect, valueToSelect) {
+            // Get a reference to the select element
+            var selectElement = document.getElementById(idSelect);
+
+            // Loop through the options in the select element to find the one we want.
+            for (var i = 0; i < selectElement.options.length; i++) {
+                // If the current option is the one we want to select, select it.
+                if (selectElement.options[i].text === valueToSelect) {
+                    selectElement.options[i].selected = true;
+                    break;
+                }
+            }
+        }
+
         function onOK() {
             let canvas = CSCanvas.objCanvas;
 
             let fy = parseInt(document.getElementById("selfirst").value);
             let ly = parseInt(document.getElementById("sellast").value);
             if (fy > ly) {
+                // The  first year is later than the last year; correct this by
+                // changing the last year to the first year. Also reflect this
+                // in the UI.
 				ly= fy;
-				//lYear.select(fYear.getSelectedItem()                                                    		
+                setSelectOption("sellast", ly.toString());
             }
             let sortChoiceText = document.getElementById("selsortby").value;
             let sortChoice = BYNAME;
