@@ -1552,41 +1552,48 @@
                 return d;
             }
 
+            // Paint vertical lines every ten semesters and after the last semester
             drawVerticals() {
                 let saveColor = this.getColor();
                 this.setColor(this.colorVertical);
+                // y-coordinate of top of a vertical line
                 let topy = this.startVerticals;
                 let i = 0;
                 let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
+                // Invariant: vertical lines before year i have been painted
                 while (i <= diff) {
+                    // Calculate x-coordinate k just before semester i
                     let k = this.beginx + i * this.widthOne - 1;
                     this.drawLine(this.ctxMain, k, topy, k, this.liney - this.fontHeight);
                     i = i + 10;
                 }
+                // Paint a vertical line after the last year
                 let k = this.beginx + (diff + 1) * this.widthOne - 1;
                 this.drawLine(this.ctxMain, k, topy, k, this.liney - this.fontHeight);
                 this.setColor(saveColor);
             }
 
-              recalculate(sortChoice, fy, ly) {
+            // Store in array faculty people from academic years fy to ly.
+            // Sort the faculty depending on sortChoice (a constant BYNAME .. BYTITLE)
+            recalculate(sortChoice, fy, ly) {
                 this.firstSem = Semester.min(new Semester(9, fy), this.lastPossibleSem);
                 this.lastSem = Semester.min(new Semester(0, ly + 1), this.lastPossibleSem);
                 this.faculty = this.bigFaculty.copy();
                 let j = 0;
                 while (j != this.faculty.size()) {
-                  let fac = this.faculty.element(j);
-                  let out = Semester.less(fac.lastSemester(), this.firstSem) ||
+                    let fac = this.faculty.element(j);
+                    let out = Semester.less(fac.lastSemester(), this.firstSem) ||
                     Semester.less(this.lastSem, fac.firstSemester());
-                  if (out) {
-                    this.faculty.remove(j);
-                  } else {
-                    fac.lastTitle = this.lastTitle(fac);
-                    j = j + 1;
-                  }
+                    if (out) {
+                        this.faculty.remove(j);
+                    } else {
+                        fac.lastTitle = this.lastTitle(fac);
+                        j = j + 1;
+                    }
                 }
                 this.faculty.sort(sortChoice);
                 this.sortMethod = sortChoice;
-              }
+            }
         }  // end of class CSCanvas
 
         // Populate a select element with years from 1965 to 1998, inclusive.
