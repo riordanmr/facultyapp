@@ -17,6 +17,7 @@
     There was also a fair bit of manual coding.
     
     Mark Riordan  January 2024
+    Released under the MIT License.
 --> 
 <head>
     <meta charset="utf-8">
@@ -1242,7 +1243,7 @@
                 }
             }
             
-            // Draw lines in horizontal position h1..h2 for leave status st,
+            // Draw lines in horizontal position h1..h2 for leave status st at liney,
             // for the current faculty member.
             drawStatusLines(ctx, h1, h2, st, liney) {
                 if (st == TitleTime.SABBATIC) {
@@ -1257,6 +1258,9 @@
                 }
             }
 
+            // Set the color for the first three dots for faculty f.
+            // Then, paint the first three dots for faculty f if at least part
+            // of the first time period cannot painted
             firstThreeDots(f) {
                 let first = f.periods.inspect();
                 this.setColor(first.titleColor());
@@ -1266,12 +1270,16 @@
                 this.drawString(this.ctxMain, " ...", this.beginx - 18, this.liney - 4);
             }
 
+            // Set the color for the title of the last time period of f.
+            // Then, paint the last three dots for faculty f if at least part
+            // of the last time period cannot painted
             lastThreeDots(f) {
                 let last = f.periods.inspectLast();
                 this.setColor(last.titleColor());
                 if (this.isWithin(last) && Semester.lesseq(f.lastSemester(), this.lastSem)) {
                     return;
                 }
+                // Set k to the horizontal position for the last three dots
                 let diff = Semester.difference(this.firstSemScrolled, this.lastSem);
                 let k = this.beginx + (diff + 1) * this.widthOne - 1;
                 this.setColor(last.titleColor());
@@ -1280,6 +1288,9 @@
 
             // Paint a single period of service for a faculty member.  Use a horizontal line
             // that is aligned with the beginning and ending semesters of the period.
+            // Paint period tt if (part of) it is within firstSemScrolled..lastSem.
+            // previous is the previous period (null if none) and n is the next
+            // period (null if none)
             paintPeriod(previous, tt, next) {
                 if (!this.isWithin(tt))
                     return;
@@ -1318,6 +1329,7 @@
                 this.drawStatusLines(this.ctxMain, j, k, tt.status, this.liney);
             }
 
+            // = "period given by tt is at least partly within firstSem..lastSem
             isWithin(tt) {
                 if (Semester.less(tt.lastSemester, this.firstSem))
                     return false;
@@ -1326,6 +1338,8 @@
                 return true;
             }
 
+            // = "some faculty member has title tt (a constant of class TitleTime)
+            //   in a period covered by firstSem..lastSem"
             someoneHas(tt) {
                 for (let i = 0; i != this.faculty.size(); i = i + 1) {
                     let f = this.faculty.element(i);
@@ -1341,6 +1355,8 @@
                 return false;
             }
 
+            // = "some faculty member has status st (one of the status constants of TitleTime)
+            //   in a period covered by firstSem..lastSem"
             someoneHasStatus(st) {
                 for (let i = 0; i != this.faculty.size(); i = i + 1) {
                     let f = this.faculty.element(i);
@@ -1356,6 +1372,19 @@
                 return false;
             }
 
+            // Read and return the status and title information (or ".") from t for
+            // person name. The input is either
+            //    (0) a period "."
+            //    (1) one of L, SL, I, A1,A2, FP, EP, F
+            //    (2) SAB followed by one of L, SL, I, A1,A2, FP, EP, F
+            //    (3) LEA  followed by one of L, SL, I, A1,A2, FP, EP, F
+            // If the next title is wrong, print a message and return -1
+            // Because oly one value is returned, the returned value is
+            // coded as follows:
+            //    case (0) return 0
+            //    case (1) return the TitleTime constants for the value
+            //    case (2) return 15 + (TitleTime constants for the value)
+            //    case (3) return 30 + (TitleTime constants for the value)
             readTitle(t, name) {
                 let ret = 0;
                 let token = t.nextWord();
@@ -1381,12 +1410,20 @@
                 return -1;
             }
 
+            // = Last title in the range firstSem..lastSem for faculty f
+            // (the title is one of the constants in TitleTime)
+            // Precondition: at least one TitleTIme for f is within the range
             lastTitle(f) {
                 let iter = new LinkedListIterator(f.periods);
+                // Store in p the first element of periods that is within
+                // firstSem.lastSem and set iter.data() to the next one
                 while (!this.isWithin(iter.data())) {
                     iter.next();
                 }
                 let p = iter.data();
+                // Change p to the last TitleTime that is within firstSem..lastSem
+                //invariant: p is within firstSem..lastSem and iter.data()
+                //           is the next TitleTime on the list (null if none)                
                 iter.next();
                 while (iter.okay() && this.isWithin(iter.data())) {
                     p = iter.data();
@@ -1395,8 +1432,10 @@
                 return p.title;
             }
 
+            // Read the next time period for person name from t into s1 and s2
+            // If there is any error in the input, print a message and set the year of s1 to -1
             readPeriod(t, name, s1, s2) {
-                let bSemester = t.nextWord();
+                let bSemester = t.nextWord();  // The first semester (F or S)
                 if (!this.isForS(bSemester)) {
                     this.error = true;
                     this.message1 = "A token following " + name +
@@ -1406,7 +1445,7 @@
                     return;
                 }
                 s1.setSemester(bSemester);
-                let bYear = t.nextIntToken();
+                let bYear = t.nextIntToken();  // The first year
                 if (bYear == -1) {
                     this.error = true;
                     this.message1 = "The first year for name " + name + " is not an integer.";
@@ -1414,8 +1453,9 @@
                     return;
                 }
                 s1.setYear(bYear);
-                let eSemester = t.nextWord();
-                let eYear;
+                let eSemester = t.nextWord();   // Either the last semester (F or S)
+                                                // or the "present"
+                let eYear;                      // The last year
                 if (eSemester == "present") {
                     s2.setSemester(this.lastPossibleSem.semester());
                     s2.setYear(this.lastPossibleSem.year());
@@ -1439,6 +1479,7 @@
                 }
             }
 
+            // = s consists solely of digits 0..9
             isDigits(s) {
                 for (let i = 0; i != s.length(); i = i + 1) {
                     if (s.charAt(i) < '0') return false;
@@ -1447,19 +1488,25 @@
                 return true;
             }
 
+            // = s is "F" or "S"
             isForS(s) {
                 return (s=="F" || s=="S");
             }
 
-
+            // Construct and return a DynArray with the data from input.
+            // The input is in file faclist.txt.
+            // Input must have the format described in class Facultylists
+            // Return null if there is an error in the input
             parse() /* returns a DynArray */ {
-                //console.log("parse here");
                 let d = new DynArray();
                 let t = new GriesTokenizer(strFacList);
+                // Invariant: d contains the faculty data parsed thus far;
+                //            the current token is either TT_EOF or the first datum
+                //    		  for the next faculty  member to get from the input is
+                //            in ttype-nval-sval                
                 while (t.hasMoreTokens()) {
                     let name = t.nextWord().replaceAll('=', ' ');
-                    //console.log("parse: name=" + name);
-
+                    // Read in title and leave info into title and status
                     let title = this.readTitle(t, name);
                     if (title == -1) return null;
                     let status = TitleTime.NOLEAVE;
@@ -1477,7 +1524,12 @@
                     if (s1.year() == -1) return null;
                     let f = new Faculty(name, title, status, s1, s2);
                     title = this.readTitle(t, name);
+                    // invariant: d contains all periods for name that have been read
+                    //            in so far and title contains the next token
+                    //            of the input (0 for ".", -1 for error, and
+                    //            one of the constants from from TitleTime otherwise                    
                     while (title != 0) {
+                        // Break title into its title and status
                         if (title == -1) return null;
                         status = TitleTime.NOLEAVE;
                         if (title > 30) {
@@ -1555,6 +1607,7 @@
 
         // Initialize the HTML.
         function initHTML() {
+            // Populate the year select elements.
             initSelect("selfirst", 1965);
             initSelect("sellast", LASTYEAR);
         }
