@@ -17,12 +17,27 @@ const colorArrow = '#000000';
 const triangleOffsetRatio = 0.2;
 
 class CSScrollbar {
-    constructor (canvas, maxLines, linesPerPage, isVertical, onScrollCallback) {
+    // Create a new CSScrollbar object.  
+    // canvas       is the canvas of the scrollbar.
+    // canvasMain   is the canvas of the main window (the one being scrolled).
+    // maxLines     is the total number of lines in the window being scrolled.
+    //              or in the case of a horizontal scrollbar, the number of units
+    //              to be scrolled.
+    // linesPerPage is the number of lines (or horizontal units) visible on 
+    //              the screen at once.
+    // isVertical   is true for a vertical scrollbar, or false for horizontal.
+    // onScrollback is a function to be called whenever the user moves the slider.
+    //              This function will then query curLine to find out where they 
+    //              moved it to.
+    constructor (canvas, canvasMain, maxLines, linesPerPage, isVertical, onScrollCallback) {
       this.canvas = canvas;
-      this.ctx = canvas.getContext('2d');
+      this.canvasMain = canvasMain;
       this.maxLines = maxLines;
       this.linesPerPage = linesPerPage;
+      this.isVertical = isVertical;
       this.onScrollCallback = onScrollCallback;
+
+      this.ctx = canvas.getContext('2d');
 
       this.width = canvas.width;
       this.height = canvas.height;
@@ -34,7 +49,6 @@ class CSScrollbar {
         this.totalScrollbarLength = canvas.width;
       }
       this.curLine = 0;
-      this.isVertical = isVertical;
       this.isDragging = false;
       // curSliderPos is the location of the slider, relative to the top 
       // or left of the scrollbar canvas.
@@ -54,7 +68,13 @@ class CSScrollbar {
       }
       this.canvas.addEventListener('mousedown', this.handleMouseDown);
       this.canvas.addEventListener('mousemove', this.handleMouseMove);
+      // Have the main window also watch for cursor movements, as sometimes
+      // users dragging the slider will stray outside the scrollbar.
+      this.canvasMain.addEventListener('mousemove', this.handleMouseMove);
       this.canvas.addEventListener('mouseup', this.handleMouseUp);
+      // Have the main window also watch for mouse up, as sometimes
+      // users dragging the slider will let go of the button outside the scrollbar.
+      this.canvasMain.addEventListener('mouseup', this.handleMouseUp);
     }
 
     setMaxLines(maxLines) {

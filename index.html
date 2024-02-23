@@ -1020,15 +1020,15 @@
                 var linesPerPage = Math.trunc((this.mainHeight - 5) / this.fontHeight);
                 // Account for the 5 header lines at the top that don't scroll.
                 linesPerPage -= 5;
-                this.scrollbarVert = new CSScrollbar(this.canvasScrollVert, maxLines,
-                    linesPerPage, true, function() {
+                this.scrollbarVert = new CSScrollbar(this.canvasScrollVert, this.canvasMain,
+                    maxLines, linesPerPage, true, function() {
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarVert.draw();
 
                 var sems= Semester.difference(this.firstSem,this.lastSem) + 1;
-                this.scrollbarHorz = new CSScrollbar(this.canvasScrollHorz, sems,
-                    10, false, function() {
+                this.scrollbarHorz = new CSScrollbar(this.canvasScrollHorz, this.canvasMain,
+                    sems, 10, false, function() {
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarHorz.draw();
@@ -1038,24 +1038,32 @@
                 });
             }
 
+            // Calculate the number horizontal pixels of the given string,
+            // using the current font.
             stringWidth(s) {
                 return this.ctxMain.measureText(s).width;
             }
 
+            // Set the color to be used for text and lines.
+            // color is an HTML-style color name such as "red", or value, 
+            // such as #ff0000.
             setColor(color) {
                 this.ctxMain.fillStyle = color;
                 this.ctxMain.strokeStyle = color;
                 this.savedColor = color;
             }
 
+            // Return the current color, as an HTML string.
             getColor() {
                 return this.savedColor;
             }
 
+            // Render the given string at position (x,y), using the current color.
             drawString(ctx, s, x, y) {
                 ctx.fillText(s, x, y);
             }
 
+            // Draw a line from (x1, y1) to (x2,y2) using the current color.
             drawLine(ctx, x1, y1, x2, y2) {
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
@@ -1634,6 +1642,8 @@
             }
         }
 
+        // Handle a click on the OK button, which causes us to redisplay the
+        // faculty with the new filter and sorting criteria.
         function onOK() {
             let canvas = CSCanvas.objCanvas;
 
@@ -1661,6 +1671,7 @@
             canvas.paintCanvas();
         }
 
+        // Main function called at startup.
         function main() {
             initHTML();
             var canvasMain = document.getElementById("canvasMain");
@@ -1668,7 +1679,6 @@
             var canvasScrollHorz = document.getElementById("scrollbarHorz");
             var canvas = new CSCanvas(canvasMain, canvasScrollVert, canvasScrollHorz);
             canvas.paintCanvas();
-
         }
         main();
     </script>
