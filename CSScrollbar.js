@@ -18,7 +18,12 @@ const triangleOffsetRatio = 0.2;
 
 class CSScrollbar {
     // Create a new CSScrollbar object.  
-    // canvas       is the canvas of the scrollbar.
+    // canvas       is the canvas of the scrollbar.  For a vertical scrollbar, this
+    //              should be positioned immediately to the left or right of the
+    //              main window being scrolled (you may want to use an HTML table),
+    //              and should be tall and thin. For a horizontal scrollbar, it should
+    //              be positioned immediately below the main window, and should be
+    //              short and wide.
     // canvasMain   is the canvas of the main window (the one being scrolled).
     // maxLines     is the total number of lines in the window being scrolled.
     //              or in the case of a horizontal scrollbar, the number of units
@@ -175,12 +180,13 @@ class CSScrollbar {
         this.drawTriangle(this.width - this.height * triangleOffsetRatio, this.height / 2, // right center
           this.width - this.height * (1.0-triangleOffsetRatio), this.height * triangleOffsetRatio, // top left
           this.width - this.height * (1.0-triangleOffsetRatio), this.height * (1.0-triangleOffsetRatio)); // bottom left
-
       }
     }
 
     // The user has clicked on the scrollbar at location y in the scrollbar canvas.  
-    // Calculate the line to scroll to and return true if it has changed.
+    // Calculate the line to scroll to.
+    // Exit: Returns true if the line number has changed, in which case
+    //       curLine is the new ordinal of the top line in the window.
     calculateNewLine(y) {
       if (y >= this.curSliderPos && y <= (this.curSliderPos + this.scrollbarSize)) {
         // User clicked on the slider.  No change in line number.
@@ -271,6 +277,7 @@ class CSScrollbar {
       }
     }
 
+    // Handle the mouse up event, possibly while the user is dragging the slider.
     handleMouseUp(e) {
       this.isDragging = false;
     }
