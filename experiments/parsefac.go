@@ -82,9 +82,9 @@ func AddSpan(name string, ignore bool, yearsForFac *float64, startSem string, st
 	}
 	if !ignore {
 		*yearsForFac += numYears
-		fmt.Println(name+" startSem="+startSem, " startYear="+startYear, " endSem="+endSem, " endYear="+endYear)
+		//fmt.Println(name+" startSem="+startSem, " startYear="+startYear, " endSem="+endSem, " endYear="+endYear)
 	} else {
-		fmt.Println("ignoring ", startSem, startYear, endSem, endYear)
+		fmt.Println(" ignoring ", numYears, "for", startSem, startYear, endSem, endYear)
 	}
 }
 
@@ -108,7 +108,7 @@ func ParseFac(input string) {
 			switch state {
 			case ST_BEGIN:
 				name = token
-				fmt.Println("Name: ", name)
+				//fmt.Println("Name: ", name)
 				state = ST_LOOKING_TITLE
 			case ST_LOOKING_TITLE:
 				if token == "LEA" {
