@@ -136,7 +136,11 @@ class CSScrollbar {
       this.ctx.fillStyle = colorSlider;
       if (this.isVertical) {
         // Draw the slider.
-        this.pixelsPerScroll = (this.height - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines); 
+        // Calculate the ratio of the slider's position to the scrollbar's length.
+        // The amount of space in which slider can slide is reduced by the arrows 
+        // at the ends of the scrollbar, plus the slider itself, each of which is
+        // as wide as the scrollbar. Hence the subtraction of 3*scrollbarSize.
+        this.pixelsPerScroll = (this.totalScrollbarLength - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines); 
         var ratioDown = this.curLine / this.maxLines;
         this.curSliderPos = this.scrollbarSize + (this.height - 3*this.scrollbarSize) * ratioDown;
         this.drawCurvedSquare(0, this.curSliderPos, this.width, 0.3*this.width);
@@ -159,7 +163,7 @@ class CSScrollbar {
           this.width*(1.0-triangleOffsetRatio), this.height - this.width*(1.0-triangleOffsetRatio)); // top right
       } else {
         // Draw the slider.
-        this.pixelsPerScroll = (this.width - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines);
+        this.pixelsPerScroll = (this.totalScrollbarLength - 3*this.scrollbarSize) * (this.linesPerPage / this.maxLines);
         var ratioDown = this.curLine / this.maxLines;
         this.curSliderPos = this.scrollbarSize + (this.width - 3*this.scrollbarSize) * ratioDown;
         this.drawCurvedSquare(this.curSliderPos, 0, this.scrollbarSize, 0.3*this.scrollbarSize);
