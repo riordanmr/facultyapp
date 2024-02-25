@@ -101,7 +101,41 @@
             line-height: 0px;
         }
     </style>
-    <!-- This is the equivalent of the embedded resource faclist.txt.  -->
+    <!-- This is the equivalent of the embedded resource faclist.txt.  
+        Here is the original documentation for faclist.txt:
+        
+        The faculty appear in faclist.txt in any
+        order. For each person, give the following information:
+        
+            Name, with character '=' instead of a blank --the name may
+            not contain a blank.
+                
+            Description of a period of service.     	(These descriptions must
+            Description of next period of service.	appear in chronological
+            ...										order and have no overlap)
+            Description of last period of service.
+            A period "."
+        
+        A description of a period of service consists of:
+        
+            An optional leave thing: "SAB" for sabbatic and "LEA" for other leaves
+        
+            A title: "L" for lecturer,
+                        "SL" for senior lecturer,
+                        "I"  for instructor,
+                        "A1" for assistant professor,
+                        "A2" for associate professor,
+                        "FP" for full professor,
+                        "EP" for professor emeritus
+                        "F"  for a member of the Field of CS who is not a member
+                            of the department
+            The first semester of the period  (e.g. F 1989  or  S 1965)
+            The last semester of the period (e.g. S 1989). If the last semester is
+                the current one and the person is expected to be on the faculty
+                in the next semester, use "present" for the last semester.
+            
+        SEPARATE EACH PIECE OF DATA BY AT LEAST ONE BLANK OR BY AN END-OF-LINE.        
+    -->
     <script type="text/javascript" src="faclist.js"></script>
     <!-- Class to implement scrollbars. -->
     <script type="text/javascript" src="CSScrollbar.js"></script>
