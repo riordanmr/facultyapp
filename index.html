@@ -986,8 +986,14 @@
                 this.message1 = "";
                 this.message2 = "";
                 this.firstSem = null;
-                this.lastSem = new Semester(0, LASTYEAR+1);
-                this.lastPossibleSem = new Semester(0, LASTYEAR+1);
+
+                // Set up the last possible semesters and set the last display semester to it.
+                let curDate = new Date();
+                let curYear = curDate.getFullYear();
+                let curMonth = curDate.getMonth();
+                this.lastSem = new Semester(curMonth, curYear);
+                this.lastPossibleSem = new Semester(curMonth, curYear);
+
                 this.colorNames = rgb(16, 4, 177);
                 this.colorBlack = rgb(0, 0, 0);
 
@@ -1691,7 +1697,7 @@
             var canvasScrollVert = document.getElementById("scrollbarVert");
             var canvasScrollHorz = document.getElementById("scrollbarHorz");
             var canvas = new CSCanvas(canvasMain, canvasScrollVert, canvasScrollHorz);
-            canvas.paintCanvas();
+            onOK();
         }
         main();
     </script>
