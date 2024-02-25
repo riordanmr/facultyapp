@@ -1585,6 +1585,14 @@
                 this.setColor(saveColor);
             }
 
+            // Reset the vertical and horizontal scrollbars to their initial positions,
+            // and reset the number of lines covered by the vertical scrollbar.
+            resetScrollbars() {
+                this.scrollbarVert.curLine = 0;
+                this.scrollbarVert.maxLines = this.faculty.size();
+                this.scrollbarHorz.curLine = 0;
+            }
+
             // Store in array faculty people from academic years fy to ly.
             // Sort the faculty depending on sortChoice (a constant BYNAME .. BYTITLE)
             recalculate(sortChoice, fy, ly) {
@@ -1672,6 +1680,7 @@
             }
             
             canvas.recalculate(sortChoice, fy, ly);
+            canvas.resetScrollbars();
             canvas.paintCanvas();
         }
 
