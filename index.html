@@ -110,9 +110,9 @@
             Name, with character '=' instead of a blank --the name may
             not contain a blank.
                 
-            Description of a period of service.     	(These descriptions must
-            Description of next period of service.	appear in chronological
-            ...										order and have no overlap)
+            Description of a period of service.         (These descriptions must
+            Description of next period of service.  appear in chronological
+            ...                                     order and have no overlap)
             Description of last period of service.
             A period "."
         
@@ -1346,7 +1346,7 @@
             paintPeriod(previous, tt, next) {
                 if (!this.isWithin(tt))
                     return;
-               	// Calculate position j of beginning of line for time period tt
+                // Calculate position j of beginning of line for time period tt
                 let sTemp = Semester.max(this.firstSemScrolled, tt.firstSemester);
                 sTemp = Semester.min(this.lastSem, sTemp);
                 let j = this.beginx + Semester.difference(this.firstSemScrolled, sTemp) * this.widthOne;
@@ -1554,7 +1554,7 @@
                 let t = new GriesTokenizer(strFacList);
                 // Invariant: d contains the faculty data parsed thus far;
                 //            the current token is either TT_EOF or the first datum
-                //    		  for the next faculty  member to get from the input is
+                //            for the next faculty  member to get from the input is
                 //            in ttype-nval-sval                
                 while (t.hasMoreTokens()) {
                     let name = t.nextWord().replaceAll('=', ' ');
@@ -1705,7 +1705,7 @@
                 // The  first year is later than the last year; correct this by
                 // changing the last year to the first year. Also reflect this
                 // in the UI.
-				ly= fy;
+                ly= fy;
                 setSelectOption("sellast", ly.toString());
             }
             let sortChoiceText = document.getElementById("selsortby").value;
