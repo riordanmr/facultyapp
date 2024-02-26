@@ -112,13 +112,16 @@ h1 {
   function main() {
     configMain();
     
-    sbVert = new CSScrollbar(canvasScrollbarVert, canvasMain, MAXLINES, computeLinesPerPage(), true,
+    var linesPerPage = computeLinesPerPage();
+    var linesPerScroll = 10;
+    sbVert = new CSScrollbar(canvasScrollbarVert, canvasMain, MAXLINES, linesPerPage, 
+      linesPerScroll, true,
       function () {
         drawMain();
       });
     sbVert.draw();
 
-    sbHorz = new CSScrollbar(canvasScrollbarHorz, canvasMain, MAXLINES, 10, false,
+    sbHorz = new CSScrollbar(canvasScrollbarHorz, canvasMain, MAXLINES, 10, 10, false,
       function () {
         drawMain();
       });

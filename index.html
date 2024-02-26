@@ -1064,15 +1064,18 @@
                 var linesPerPage = Math.trunc((this.mainHeight - 5) / this.fontHeight);
                 // Account for the 5 header lines at the top that don't scroll.
                 linesPerPage -= 5;
+                // Normally I'd design the app to scroll by a page at a time, but the
+                // original scrolls by only 10 lines at a time, for some reason.
+                var linesPerScroll = 10;
                 this.scrollbarVert = new CSScrollbar(this.canvasScrollVert, this.canvasMain,
-                    maxLines, linesPerPage, true, function() {
+                    maxLines, linesPerPage, linesPerScroll, true, function() {
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarVert.draw();
 
                 var sems= Semester.difference(this.firstSem,this.lastSem) + 1;
                 this.scrollbarHorz = new CSScrollbar(this.canvasScrollHorz, this.canvasMain,
-                    sems, 10, false, function() {
+                    sems, 10, 10, false, function() {
                         CSCanvas.objCanvas.paintCanvas();
                     });
                 this.scrollbarHorz.draw();

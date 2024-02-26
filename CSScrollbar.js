@@ -30,15 +30,20 @@ class CSScrollbar {
     //              to be scrolled.
     // linesPerPage is the number of lines (or horizontal units) visible on 
     //              the screen at once.
+    // linesPerScroll is the number of lines (or horizontal units) to scroll
+    //              when the user chooses to scroll by a page. If this is 0,
+    //              the amount will be linesPerPage.
     // isVertical   is true for a vertical scrollbar, or false for horizontal.
     // onScrollback is a function to be called whenever the user moves the slider.
     //              This function will then query curLine to find out where they 
     //              moved it to.
-    constructor (canvas, canvasMain, maxLines, linesPerPage, isVertical, onScrollCallback) {
+    constructor (canvas, canvasMain, maxLines, linesPerPage, linesPerScroll,
+      isVertical, onScrollCallback) {
       this.canvas = canvas;
       this.canvasMain = canvasMain;
       this.maxLines = maxLines;
       this.linesPerPage = linesPerPage;
+      this.linesPerScroll = (linesPerScroll==0) ? linesPerPage : linesPerScroll;
       this.isVertical = isVertical;
       this.onScrollCallback = onScrollCallback;
 
@@ -210,13 +215,13 @@ class CSScrollbar {
           }
         } else if(y < this.curSliderPos) {
           // The user has clicked above the slider, meaning page up.
-          this.curLine -= this.linesPerPage;
+          this.curLine -= this.linesPerScroll;
           if (this.curLine < 0) {
             this.curLine = 0;
           }
         } else {
           // The user has clicked below the slider, meaning page down.
-          this.curLine += this.linesPerPage;
+          this.curLine += this.linesPerScroll;
           if (this.curLine >= this.maxLines) {
             this.curLine = this.maxLines-1;
           }
