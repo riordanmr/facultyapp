@@ -1473,6 +1473,11 @@
                 // Store in p the first element of periods that is within
                 // firstSem.lastSem and set iter.data() to the next one
                 while (!this.isWithin(iter.data())) {
+                    if(iter.m_next === null) {
+                        // No period fits within the range, so just return
+                        // the last title.
+                        return iter.data().title;
+                    }
                     iter.next();
                 }
                 let p = iter.data();
